@@ -7,9 +7,9 @@
 - [x] Full personal finance ledger (Accounts, Transactions, Budgets, Savings, Recurring).
 - [x] AI Financial Advisor with localized scoring (0-100) and overspending detection.
 - [x] Groq LLM middleware with dynamic API key modal and model switcher.
-- [ ] Raw ledger statement webhook / API endpoint for Excel, MS Access, and BigQuery data analytics sync.
-- [ ] Exportable monthly financial intelligence reports (PDF/Excel via ReportLab).
-- [ ] Heuristic subscription leakage detector & category spending heatmaps.
+- [x] Raw ledger statement webhook / API endpoint for Excel, MS Access, and BigQuery data analytics sync.
+- [x] Exportable monthly financial intelligence reports (PDF/Excel via ReportLab).
+- [x] Heuristic subscription leakage detector & category spending heatmaps.
 
 ## Phases
 
@@ -28,3 +28,4 @@
 ### Phase 4: Advanced Analytics, Reporting & Data Sync
 **Status**: 🔄 Ready for Execution Planning (/plan 4)
 **Objective**: Implement ReportLab PDF & Excel statements, raw ledger webhook for external BI integration (Excel, MS Access, BigQuery), heuristic subscription leakage detection, and interactive heatmaps.
+
