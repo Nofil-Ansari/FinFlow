@@ -11,6 +11,7 @@ from ..models.tag import Tag
 from ..services.transfer import fund_transfer
 from ..services.budget import check_and_alert
 from ..services.audit import log_action
+from ..services.ledger_stream import broadcast_ledger_event, build_transaction_snapshot
 
 
 @transactions_bp.route('/')
@@ -99,6 +100,10 @@ def add():
         if txn.transaction_type == 'expense' and txn.category_id:
             check_and_alert(current_user.user_id, txn.category_id)
 
+        try:
+            broadcast_ledger_event(current_user.user_id, 'transaction_created', build_transaction_snapshot(txn))
+        except Exception:
+            pass
         flash('Transaction added!', 'success')
         return redirect(url_for('transactions.index'))
 
@@ -146,6 +151,10 @@ def edit(txn_id):
                    note='updated transaction', old_value=old_values, new_value=new_values)
 
         db.session.commit()
+        try:
+            broadcast_ledger_event(current_user.user_id, 'transaction_updated', build_transaction_snapshot(txn))
+        except Exception:
+            pass
         flash('Transaction updated!', 'success')
         return redirect(url_for('transactions.index'))
 
@@ -168,6 +177,10 @@ def delete(txn_id):
                note=f'soft deleted {txn.transaction_type} of {txn.amount}')
     db.session.commit()
 
+    try:
+        broadcast_ledger_event(current_user.user_id, 'transaction_deleted', build_transaction_snapshot(txn))
+    except Exception:
+        pass
     flash('Transaction deleted.', 'info')
     return redirect(url_for('transactions.index'))
 
@@ -217,3 +230,4 @@ def _populate_form_choices(form):
         db.or_(Tag.user_id == current_user.user_id, Tag.user_id.is_(None))
     ).all()
     form.tag_ids.choices = [(t.tag_id, t.name) for t in tags]
+

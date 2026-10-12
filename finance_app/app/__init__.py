@@ -1,7 +1,7 @@
 import os
 from flask import Flask
 from .config import config_map
-from .extensions import db, migrate, login_manager, csrf, mail, oauth
+from .extensions import db, migrate, login_manager, csrf, mail, oauth, socketio
 
 
 def create_app(config_name=None):
@@ -19,6 +19,7 @@ def create_app(config_name=None):
     csrf.init_app(app)
     mail.init_app(app)
     oauth.init_app(app)
+    socketio.init_app(app)
 
     # Register Google OAuth
     if app.config.get('GOOGLE_CLIENT_ID'):
@@ -45,6 +46,9 @@ def create_app(config_name=None):
 
     # Register template context processors
     _register_context_processors(app)
+
+    # Register WebSocket namespaces
+    _register_websocket_namespaces()
 
     # Root route redirect
     @app.route('/')
@@ -96,6 +100,12 @@ def _register_user_loader():
     @login_manager.user_loader
     def load_user(user_id):
         return db.session.get(User, int(user_id))
+
+
+def _register_websocket_namespaces():
+    """Register WebSocket namespaces for real-time streaming."""
+    from .services.ledger_stream import LedgerNamespace
+    socketio.on_namespace(LedgerNamespace('/ws/ledger'))
 
 
 def _register_context_processors(app):
