@@ -109,7 +109,7 @@ def generate_monthly_pdf(user_id: int, month: int = None, year: int = None) -> i
     # Header
     month_name = date(target_year, target_month, 1).strftime('%B %Y')
     story.append(Paragraph(f'FinanceFlow - Financial Statement', title_style))
-    user_name = user.username if user else 'Account Holder'
+    user_name = user.name if user else 'Account Holder'
     story.append(Paragraph(f'Statement Period: {month_name}  |  Generated for: {user_name} ({user.email if user else ""})', subtitle_style))
     story.append(Spacer(1, 14))
 
@@ -231,4 +231,5 @@ def generate_monthly_pdf(user_id: int, month: int = None, year: int = None) -> i
     doc.build(story)
     buffer.seek(0)
     return buffer
+
 

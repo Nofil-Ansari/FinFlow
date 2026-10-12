@@ -62,7 +62,7 @@ def generate_ledger_excel(user_id: int, start_date: date = None, end_date: date 
 
     ws_summary['A1'] = 'FinanceFlow - Financial Executive Summary'
     ws_summary['A1'].font = title_font
-    ws_summary['A2'] = f'Report Generated: {datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")} | User: {user.username if user else ""}'
+    ws_summary['A2'] = f'Report Generated: {datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")} | User: {user.name if user else ""}'
     ws_summary['A2'].font = kpi_lbl_font
 
     summary_cards = [
@@ -146,4 +146,5 @@ def generate_ledger_excel(user_id: int, start_date: date = None, end_date: date 
     wb.save(buffer)
     buffer.seek(0)
     return buffer
+
 
