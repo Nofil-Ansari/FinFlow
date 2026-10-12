@@ -1,9 +1,9 @@
 import csv
 import io
-from datetime import date
+from datetime import date, datetime
 from calendar import monthrange
 from collections import defaultdict
-from flask import render_template, request, Response
+from flask import render_template, request, Response, send_file
 from flask_login import login_required, current_user
 from sqlalchemy import func, case
 from . import reports_bp
@@ -11,6 +11,8 @@ from ..extensions import db
 from ..models.transaction import Transaction
 from ..models.category import Category
 from ..models.audit_log import AuditLog
+from ..services.pdf_export import generate_monthly_pdf
+from ..services.excel_export import generate_ledger_excel
 
 
 @reports_bp.route('/')
@@ -105,6 +107,57 @@ def export_csv():
         output.getvalue(),
         mimetype='text/csv',
         headers={'Content-Disposition': f'attachment;filename=transactions_{date.today().isoformat()}.csv'}
+    )
+
+
+@reports_bp.route('/export/pdf')
+@login_required
+def export_pdf():
+    """Export executive financial intelligence report as PDF."""
+    month = request.args.get('month', type=int)
+    year = request.args.get('year', type=int)
+    
+    pdf_buffer = generate_monthly_pdf(current_user.user_id, month=month, year=year)
+    target_year = year or datetime.utcnow().year
+    target_month = month or datetime.utcnow().month
+    filename = f'FinanceFlow_Statement_{target_year}_{target_month:02d}.pdf'
+    
+    return send_file(
+        pdf_buffer,
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=filename
+    )
+
+
+@reports_bp.route('/export/excel')
+@login_required
+def export_excel():
+    """Export structured ledger and KPIs as an Excel workbook (.xlsx)."""
+    start_str = request.args.get('start')
+    end_str = request.args.get('end')
+    
+    start_date = None
+    end_date = None
+    if start_str:
+        try:
+            start_date = datetime.strptime(start_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    if end_str:
+        try:
+            end_date = datetime.strptime(end_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+            
+    excel_buffer = generate_ledger_excel(current_user.user_id, start_date=start_date, end_date=end_date)
+    filename = f'FinanceFlow_Ledger_{date.today().isoformat()}.xlsx'
+    
+    return send_file(
+        excel_buffer,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=filename
     )
 
 
