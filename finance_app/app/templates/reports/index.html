@@ -1,36 +1,151 @@
 {% extends 'base.html' %}
-{% block title %}Reports — FinanceFlow{% endblock %}
-{% block page_title %}Reports{% endblock %}
+{% block title %}Reports & BI Analytics - FinanceFlow{% endblock %}
+{% block page_title %}Reports & BI Analytics{% endblock %}
 
 {% block content %}
-<div class="kpi-grid">
-    <a href="{{ url_for('reports.monthly') }}" style="text-decoration:none;color:inherit;">
-        <div class="kpi-card">
-            <div class="kpi-icon">📅</div>
-            <div class="kpi-label">Monthly Summary</div>
-            <div style="color:var(--text-secondary);font-size:0.85rem;margin-top:8px;">Income vs expense breakdown by month</div>
+<div class="reports-hub" style="display:flex;flex-direction:column;gap:24px;">
+
+    <!-- Top Action Bar & Real-Time Sync Indicator -->
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;background:var(--card-bg, #ffffff);padding:18px 24px;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06);border:1px solid var(--border-color, #e2e8f0);gap:16px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:12px;height:12px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981;" id="ws-indicator-pulse"></div>
+            <div>
+                <div style="font-weight:600;font-size:0.95rem;color:var(--text-primary, #0f172a);">
+                    Live Ledger WebSocket Sync
+                </div>
+                <div style="font-size:0.8rem;color:var(--text-secondary, #64748b);" id="ws-status-text">
+                    Streaming active on <code>/ws/ledger</code> (Excel & BigQuery Ready)
+                </div>
+            </div>
         </div>
-    </a>
-    <a href="{{ url_for('reports.category_breakdown') }}" style="text-decoration:none;color:inherit;">
-        <div class="kpi-card">
-            <div class="kpi-icon">📊</div>
-            <div class="kpi-label">Category Breakdown</div>
-            <div style="color:var(--text-secondary);font-size:0.85rem;margin-top:8px;">Spending analysis per category</div>
+
+        <!-- Export Toolbar -->
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <a href="{{ url_for('reports.export_pdf', month=current_month, year=current_year) }}" 
+               class="btn" 
+               style="background:#dc2626;color:#ffffff;display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:8px;text-decoration:none;font-size:0.875rem;font-weight:500;">
+                <span>📄</span> Download PDF Report
+            </a>
+            <a href="{{ url_for('reports.export_excel') }}" 
+               class="btn" 
+               style="background:#059669;color:#ffffff;display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:8px;text-decoration:none;font-size:0.875rem;font-weight:500;">
+                <span>📊</span> Export Excel (.xlsx)
+            </a>
+            <a href="{{ url_for('reports.export_csv') }}" 
+               class="btn btn-secondary" 
+               style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:8px;text-decoration:none;font-size:0.875rem;font-weight:500;">
+                <span>📑</span> Raw CSV
+            </a>
         </div>
-    </a>
-    <a href="{{ url_for('reports.export_csv') }}" style="text-decoration:none;color:inherit;">
-        <div class="kpi-card">
-            <div class="kpi-icon">📥</div>
-            <div class="kpi-label">Export CSV</div>
-            <div style="color:var(--text-secondary);font-size:0.85rem;margin-top:8px;">Download all transactions as CSV</div>
+    </div>
+
+    <!-- Subscription Leakage Intelligence Card -->
+    <div style="background:linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);color:#ffffff;padding:24px;border-radius:12px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;">
+            <div>
+                <div style="display:inline-block;padding:4px 10px;background:rgba(255,255,255,0.15);border-radius:20px;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">
+                    AI Subscription Leakage Scanner
+                </div>
+                <h3 style="margin:0 0 6px 0;font-size:1.4rem;font-weight:700;">
+                    Detected Subscriptions & Recurring Commitments
+                </h3>
+                <p style="margin:0;font-size:0.9rem;opacity:0.85;max-width:620px;">
+                    Our heuristic engine identifies 28–32 day recurring cycles, flags price creeps, and estimates potential PKR savings.
+                </p>
+            </div>
+            <div style="text-align:right;background:rgba(0,0,0,0.25);padding:12px 20px;border-radius:10px;">
+                <div style="font-size:0.8rem;opacity:0.8;">Potential Annual Leakage Savings</div>
+                <div style="font-size:1.6rem;font-weight:800;color:#34d399;">
+                    PKR {{ "{:,.0f}".format(leakage.potential_annual_leakage_pkr) }}
+                </div>
+            </div>
         </div>
-    </a>
-    <a href="{{ url_for('reports.audit_log') }}" style="text-decoration:none;color:inherit;">
-        <div class="kpi-card">
-            <div class="kpi-icon">📝</div>
-            <div class="kpi-label">Audit Log</div>
-            <div style="color:var(--text-secondary);font-size:0.85rem;margin-top:8px;">View activity and change history</div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:16px;margin-top:20px;">
+            <div style="background:rgba(255,255,255,0.08);padding:14px;border-radius:8px;">
+                <div style="font-size:0.75rem;opacity:0.75;">Active Recurring Services</div>
+                <div style="font-size:1.3rem;font-weight:700;margin-top:4px;">{{ leakage.subscription_count }} services</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.08);padding:14px;border-radius:8px;">
+                <div style="font-size:0.75rem;opacity:0.75;">Monthly Commitment</div>
+                <div style="font-size:1.3rem;font-weight:700;margin-top:4px;">PKR {{ "{:,.0f}".format(leakage.total_monthly_commitment_pkr) }} /mo</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.08);padding:14px;border-radius:8px;">
+                <div style="font-size:0.75rem;opacity:0.75;">Price Creep Alerts</div>
+                <div style="font-size:1.3rem;font-weight:700;margin-top:4px;color:{{ '#f87171' if leakage.price_creeps else '#34d399' }};">
+                    {{ leakage.price_creeps|length }} detected
+                </div>
+            </div>
         </div>
-    </a>
+
+        {% if leakage.price_creeps %}
+        <div style="margin-top:16px;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);border-radius:8px;padding:12px 16px;">
+            <strong style="color:#fca5a5;font-size:0.85rem;">⚠️ Price Increase Alert:</strong>
+            {% for creep in leakage.price_creeps %}
+            <div style="font-size:0.85rem;margin-top:4px;opacity:0.95;">
+                • <b>{{ creep.merchant }}</b> increased by PKR {{ "{:,.0f}".format(creep.increase_pkr) }} (+{{ creep.increase_pct }}%) compared to historical average.
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Category Spending Heatmap / Breakdown -->
+    <div style="background:var(--card-bg, #ffffff);padding:24px;border-radius:12px;border:1px solid var(--border-color, #e2e8f0);box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+        <h4 style="margin:0 0 16px 0;font-size:1.1rem;font-weight:700;color:var(--text-primary, #0f172a);">
+            Category Expense Heatmap
+        </h4>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));gap:14px;">
+            {% for cat in categories %}
+            <div style="padding:14px;border-radius:10px;background:var(--bg-secondary, #f8fafc);border:1px solid var(--border-color, #e2e8f0);display:flex;justify-content:space-between;align-items:center;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span style="font-size:1.4rem;">{{ cat.icon }}</span>
+                    <div>
+                        <div style="font-weight:600;font-size:0.9rem;color:var(--text-primary, #0f172a);">{{ cat.name }}</div>
+                        <div style="font-size:0.75rem;color:var(--text-secondary, #64748b);">{{ cat.count }} transactions</div>
+                    </div>
+                </div>
+                <div style="font-weight:700;font-size:0.95rem;color:#dc2626;">
+                    PKR {{ "{:,.0f}".format(cat.total) }}
+                </div>
+            </div>
+            {% else %}
+            <div style="color:var(--text-secondary);font-size:0.9rem;">No expense categories recorded yet.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Standard Navigation Grid -->
+    <div class="kpi-grid">
+        <a href="{{ url_for('reports.monthly') }}" style="text-decoration:none;color:inherit;">
+            <div class="kpi-card">
+                <div class="kpi-icon">📅</div>
+                <div class="kpi-label">Monthly Summary</div>
+                <div style="color:var(--text-secondary);font-size:0.85rem;margin-top:8px;">Income vs expense breakdown by month</div>
+            </div>
+        </a>
+        <a href="{{ url_for('reports.category_breakdown') }}" style="text-decoration:none;color:inherit;">
+            <div class="kpi-card">
+                <div class="kpi-icon">🏷️</div>
+                <div class="kpi-label">Category Breakdown</div>
+                <div style="color:var(--text-secondary);font-size:0.85rem;margin-top:8px;">Spending analysis per category</div>
+            </div>
+        </a>
+        <a href="{{ url_for('reports.export_csv') }}" style="text-decoration:none;color:inherit;">
+            <div class="kpi-card">
+                <div class="kpi-icon">📑</div>
+                <div class="kpi-label">Export CSV</div>
+                <div style="color:var(--text-secondary);font-size:0.85rem;margin-top:8px;">Download all transactions as CSV</div>
+            </div>
+        </a>
+        <a href="{{ url_for('reports.audit_log') }}" style="text-decoration:none;color:inherit;">
+            <div class="kpi-card">
+                <div class="kpi-icon">🛡️</div>
+                <div class="kpi-label">Audit Log</div>
+                <div style="color:var(--text-secondary);font-size:0.85rem;margin-top:8px;">View activity and change history</div>
+            </div>
+        </a>
+    </div>
+
 </div>
 {% endblock %}

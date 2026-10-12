@@ -13,12 +13,41 @@ from ..models.category import Category
 from ..models.audit_log import AuditLog
 from ..services.pdf_export import generate_monthly_pdf
 from ..services.excel_export import generate_ledger_excel
+from ..services.subscription_leakage import detect_subscription_leakage
 
 
 @reports_bp.route('/')
 @login_required
 def index():
-    return render_template('reports/index.html')
+    leakage = detect_subscription_leakage(current_user.user_id)
+    
+    # Category spending breakdown for heatmap/charts
+    category_rows = db.session.query(
+        Category.name,
+        Category.icon,
+        func.sum(Transaction.amount).label('total'),
+        func.count(Transaction.transaction_id).label('count')
+    ).join(Transaction, Transaction.category_id == Category.category_id).filter(
+        Transaction.user_id == current_user.user_id,
+        Transaction.transaction_type == 'expense',
+        Transaction.is_deleted == False
+    ).group_by(Category.name, Category.icon).order_by(func.sum(Transaction.amount).desc()).limit(8).all()
+    
+    categories = [{
+        'name': r.name,
+        'icon': r.icon or '🏷️',
+        'total': float(r.total),
+        'count': r.count
+    } for r in category_rows]
+    
+    now = datetime.utcnow()
+    return render_template(
+        'reports/index.html',
+        leakage=leakage,
+        categories=categories,
+        current_month=now.month,
+        current_year=now.year
+    )
 
 
 @reports_bp.route('/monthly')
