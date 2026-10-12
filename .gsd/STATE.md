@@ -15,3 +15,8 @@
 - Chose `openai/gpt-oss-120b` as default Groq flagship model due to 128k context and reasoning performance.
 - Store user custom API keys securely in `FinancialProfile` table with masked UI representation (`gsk_••••••••yMWR`).
 - Implemented offline Pakistani rule-based advisor fallback whenever API keys are unset.
+
+## Phase 4 Status
+- Discussion completed: Selected Option A (ReportLab, Heuristic Leakage Detection, Integrated UI Hub).
+- Scoped webhook endpoint for raw tabular ledger statement syncing with Excel, MS Access, and BigQuery.
+- Ready for `/plan 4`.

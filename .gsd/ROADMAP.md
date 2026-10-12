@@ -1,14 +1,15 @@
 # ROADMAP.md
 
-> **Current Phase**: Phase 3 Complete (Ready for Phase 4)
-> **Milestone**: v1.0 — LLM-Powered Pakistani Financial Advisor
+> **Current Phase**: Phase 4 — In Discussion / Planning
+> **Milestone**: v1.0 — LLM-Powered Pakistani Financial Advisor & BI Analytics
 
 ## Must-Haves (from SPEC)
 - [x] Full personal finance ledger (Accounts, Transactions, Budgets, Savings, Recurring).
 - [x] AI Financial Advisor with localized scoring (0-100) and overspending detection.
 - [x] Groq LLM middleware with dynamic API key modal and model switcher.
-- [ ] Exportable monthly financial intelligence reports (PDF/Excel).
-- [ ] Advanced multi-month predictive budgeting visualization.
+- [ ] Raw ledger statement webhook / API endpoint for Excel, MS Access, and BigQuery data analytics sync.
+- [ ] Exportable monthly financial intelligence reports (PDF/Excel via ReportLab).
+- [ ] Heuristic subscription leakage detector & category spending heatmaps.
 
 ## Phases
 
@@ -24,6 +25,6 @@
 **Status**: ✅ Completed
 **Objective**: Build `GroqMiddleware`, database migration for user API keys, modal UI on `/ai/advisor`, model selector (`openai/gpt-oss-120b`, `qwen/qwen3.8-27b`), and test connection endpoints.
 
-### Phase 4: Advanced Analytics & Financial Reporting
-**Status**: ⏳ Ready for Planning
-**Objective**: Implement automated monthly PDF/Excel export reports, category heatmaps, and recurring subscription leakage detection.
+### Phase 4: Advanced Analytics, Reporting & Data Sync
+**Status**: 🔄 Ready for Execution Planning (/plan 4)
+**Objective**: Implement ReportLab PDF & Excel statements, raw ledger webhook for external BI integration (Excel, MS Access, BigQuery), heuristic subscription leakage detection, and interactive heatmaps.
