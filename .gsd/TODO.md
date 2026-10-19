@@ -11,3 +11,5 @@
 - [x] AI Advisor command center with score indicator.
 - [x] Groq API middleware with connection test and model selector modal.
 - [x] 23/23 unit and integration tests passed.
+- [x] Make a README file with complete description of the code along with the skeleton by mermaid.js `medium` — 2026-10-19
+- [x] Add an MIT open source license `medium` — 2026-10-19
