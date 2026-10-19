@@ -72,6 +72,52 @@ graph TD
 
 ---
 
+## 📸 Application Walkthrough & Visual Tour
+
+Experience FinanceFlow's localized interface, intelligent advisor, and real-time reporting capabilities.
+
+### 1. Executive Dashboard & Financial Health Overview
+Live net-worth tracking, multi-account liquid balances, cash flow metrics, and localized spending predictions.
+
+![Executive Dashboard Overview](docs/assets/screenshots/dashboard_overview.png)
+
+---
+
+### 2. AI Financial Advisor & Pakistani Localization
+Kaggle-calibrated financial health scoring (0-100), localized inflation guidance, emergency fund recommendations, and Pakistani product substitution engine.
+
+![AI Advisor Command Center](docs/assets/screenshots/ai_advisor_hub.png)
+
+---
+
+### 3. High-Speed LLM Advisory via Groq (Llama 3.3 70B & Qwen 3.8 27B)
+Direct multi-turn conversational advice tailored to the Pakistani macroeconomic context, offering actionable asset allocation and inflation hedging strategies.
+
+![Live AI Chat Response](docs/assets/screenshots/groq_chat_response.png)
+
+---
+
+### 4. Zero-Friction BYO-Key Modal & Fernet Encryption
+Users can insert and verify their personal Groq API keys with live ping diagnostics. Credentials are encrypted at rest using AES-128-CBC/Fernet.
+
+![Groq API Key Configuration Modal](docs/assets/screenshots/groq_key_config.png)
+
+---
+
+### 5. Multi-Account Portfolio Management
+Track bank accounts (e.g., Meezan, HBL, Nayapay, Sadapay), physical cash wallets, credit lines, and real-time balances.
+
+![Account Portfolio Management](docs/assets/screenshots/accounts_portfolio.png)
+
+---
+
+### 6. Analytics, Monthly Reports & Dual-Format Export
+Comprehensive monthly income vs. expense breakdown, heuristic subscription leakage scanner, and single-click in-memory ReportLab PDF and OpenPyXL Excel statement exports.
+
+![Monthly Financial Reporting](docs/assets/screenshots/monthly_reporting.png)
+
+---
+
 ## 📂 Repository Directory Structure
 
 ```
