@@ -4,6 +4,7 @@
 - [ ] Add PDF summary download for monthly financial health scores.
 - [ ] Implement dark-mode toggle persistence across browser reloads.
 - [ ] Add SMS/WhatsApp notification webhook for overspending alerts.
+- [ ] Add OAuth for Google sign in & sign up `medium` — 2026-10-19
 
 ## Completed
 - [x] Core ledger with transaction categories and accounts.
