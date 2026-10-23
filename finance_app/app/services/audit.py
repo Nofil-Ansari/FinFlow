@@ -1,10 +1,18 @@
 """Audit logging service — replaces SQL audit_log inserts."""
+
 from ..extensions import db
 from ..models.audit_log import AuditLog
 
 
-def log_action(table_name, operation, record_id, user_id=None,
-               note=None, old_value=None, new_value=None):
+def log_action(
+    table_name,
+    operation,
+    record_id,
+    user_id=None,
+    note=None,
+    old_value=None,
+    new_value=None,
+):
     """Create an audit log entry.
 
     Args:

@@ -31,8 +31,15 @@ LLM_READ_TIMEOUT = 30.0
 LLM_TIMEOUT: Tuple[float, float] = (LLM_CONNECT_TIMEOUT, LLM_READ_TIMEOUT)
 
 SENSITIVE_PARAM_NAMES = {
-    'app_id', 'api_key', 'apikey', 'key', 'secret',
-    'token', 'access_token', 'password', 'auth'
+    "app_id",
+    "api_key",
+    "apikey",
+    "key",
+    "secret",
+    "token",
+    "access_token",
+    "password",
+    "auth",
 }
 
 _SHARED_SESSION: Optional[requests.Session] = None
@@ -56,7 +63,7 @@ def get_http_session(
         total=max_retries,
         backoff_factor=backoff_factor,
         status_forcelist=list(status_forcelist),
-        allowed_methods=frozenset(['GET', 'HEAD', 'OPTIONS']),
+        allowed_methods=frozenset(["GET", "HEAD", "OPTIONS"]),
         raise_on_status=False,
         respect_retry_after_header=True,
     )
@@ -87,22 +94,24 @@ def sanitize_url(url: str) -> str:
         sanitized_params = {}
         for k, v_list in query_params.items():
             if k.lower() in SENSITIVE_PARAM_NAMES:
-                sanitized_params[k] = ['[REDACTED]'] * len(v_list)
+                sanitized_params[k] = ["[REDACTED]"] * len(v_list)
             else:
                 sanitized_params[k] = v_list
 
         new_query = urlencode(sanitized_params, doseq=True)
-        return urlunparse((
-            parsed.scheme,
-            parsed.netloc,
-            parsed.path,
-            parsed.params,
-            new_query,
-            parsed.fragment
-        ))
+        return urlunparse(
+            (
+                parsed.scheme,
+                parsed.netloc,
+                parsed.path,
+                parsed.params,
+                new_query,
+                parsed.fragment,
+            )
+        )
     except Exception:
         # Fallback regex masking in case urlparse fails
-        return re.sub(r'([?&](?:app_id|api_key|key|token)=)[^&]+', r'\1[REDACTED]', url)
+        return re.sub(r"([?&](?:app_id|api_key|key|token)=)[^&]+", r"\1[REDACTED]", url)
 
 
 def sanitize_headers(headers: Optional[Dict]) -> Dict:
@@ -112,8 +121,8 @@ def sanitize_headers(headers: Optional[Dict]) -> Dict:
     sanitized = {}
     for k, v in headers.items():
         k_lower = str(k).lower()
-        if k_lower in ('authorization', 'proxy-authorization', 'x-api-key', 'cookie'):
-            sanitized[k] = '•••••••• (Masked)'
+        if k_lower in ("authorization", "proxy-authorization", "x-api-key", "cookie"):
+            sanitized[k] = "•••••••• (Masked)"
         else:
             sanitized[k] = v
     return sanitized
@@ -124,7 +133,7 @@ def parse_retry_after(response: Optional[requests.Response]) -> Optional[int]:
     if response is None:
         return None
 
-    retry_after = response.headers.get('Retry-After')
+    retry_after = response.headers.get("Retry-After")
     if not retry_after:
         return None
 

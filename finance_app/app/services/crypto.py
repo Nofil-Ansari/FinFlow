@@ -27,13 +27,14 @@ def _get_fernet() -> Fernet:
     """Derive a URL-safe 32-byte base64-encoded Fernet key from SECRET_KEY."""
     secret: Optional[str] = None
     if has_app_context():
-        secret = current_app.config.get('SECRET_KEY')
+        secret = current_app.config.get("SECRET_KEY")
     if not secret:
         import os
-        secret = os.getenv('SECRET_KEY', 'dev-secret-key-change-me')
+
+        secret = os.getenv("SECRET_KEY", "dev-secret-key-change-me")
 
     # Hash secret to 32 bytes and url-safe base64 encode for Fernet
-    key_bytes = hashlib.sha256(secret.encode('utf-8')).digest()
+    key_bytes = hashlib.sha256(secret.encode("utf-8")).digest()
     fernet_key = base64.urlsafe_b64encode(key_bytes)
     return Fernet(fernet_key)
 
@@ -51,12 +52,12 @@ def encrypt_credential(value: Optional[str]) -> Optional[str]:
     clean_value = str(value).strip()
 
     # Prevent double-encrypting an already encrypted token
-    if clean_value.startswith('gAAAAA'):
+    if clean_value.startswith("gAAAAA"):
         return clean_value
 
     try:
         f = _get_fernet()
-        encrypted = f.encrypt(clean_value.encode('utf-8')).decode('utf-8')
+        encrypted = f.encrypt(clean_value.encode("utf-8")).decode("utf-8")
         return encrypted
     except Exception as e:
         logger.error(f"Failed to encrypt credential: {e}")
@@ -76,15 +77,17 @@ def decrypt_credential(encrypted_value: Optional[str]) -> Optional[str]:
     val = str(encrypted_value).strip()
 
     # If it doesn't match standard Fernet token prefix, it is an unencrypted legacy key
-    if not val.startswith('gAAAAA'):
+    if not val.startswith("gAAAAA"):
         return val
 
     try:
         f = _get_fernet()
-        decrypted = f.decrypt(val.encode('utf-8')).decode('utf-8')
+        decrypted = f.decrypt(val.encode("utf-8")).decode("utf-8")
         return decrypted
     except InvalidToken:
-        logger.warning("InvalidToken encountered during credential decryption; possible SECRET_KEY mismatch.")
+        logger.warning(
+            "InvalidToken encountered during credential decryption; possible SECRET_KEY mismatch."
+        )
         return val
     except Exception as e:
         logger.warning(f"Credential decryption error: {e}")

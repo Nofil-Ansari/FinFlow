@@ -6,7 +6,8 @@ from ..extensions import db
 
 class User(UserMixin, db.Model):
     """User model with email/password and Google OAuth support."""
-    __tablename__ = 'users'
+
+    __tablename__ = "users"
 
     user_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -15,24 +16,33 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(256))
     google_id = db.Column(db.String(100), unique=True)
     avatar_url = db.Column(db.String(500))
-    preferred_currency = db.Column(db.String(10), default='PKR')
+    preferred_currency = db.Column(db.String(10), default="PKR")
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Relationships
-    accounts = db.relationship('Account', backref='user', lazy='dynamic')
-    transactions = db.relationship('Transaction', backref='user', lazy='dynamic')
-    budgets = db.relationship('Budget', backref='user', lazy='dynamic')
-    savings_goals = db.relationship('SavingsGoal', backref='user', lazy='dynamic')
-    investments = db.relationship('Investment', backref='user', lazy='dynamic')
-    recurring_transactions = db.relationship('RecurringTransaction', backref='user', lazy='dynamic')
-    categories = db.relationship('Category', backref='user', lazy='dynamic')
-    tags = db.relationship('Tag', backref='user', lazy='dynamic')
-    notifications = db.relationship('Notification', backref='user', lazy='dynamic')
+    accounts = db.relationship("Account", backref="user", lazy="dynamic")
+    transactions = db.relationship("Transaction", backref="user", lazy="dynamic")
+    budgets = db.relationship("Budget", backref="user", lazy="dynamic")
+    savings_goals = db.relationship("SavingsGoal", backref="user", lazy="dynamic")
+    investments = db.relationship("Investment", backref="user", lazy="dynamic")
+    recurring_transactions = db.relationship(
+        "RecurringTransaction", backref="user", lazy="dynamic"
+    )
+    categories = db.relationship("Category", backref="user", lazy="dynamic")
+    tags = db.relationship("Tag", backref="user", lazy="dynamic")
+    notifications = db.relationship("Notification", backref="user", lazy="dynamic")
 
     # AI Advisor relationships
-    financial_profile = db.relationship('FinancialProfile', backref='user', uselist=False, lazy='joined')
-    ai_messages = db.relationship('AiChatMessage', backref='user', lazy='dynamic', order_by='AiChatMessage.created_at')
+    financial_profile = db.relationship(
+        "FinancialProfile", backref="user", uselist=False, lazy="joined"
+    )
+    ai_messages = db.relationship(
+        "AiChatMessage",
+        backref="user",
+        lazy="dynamic",
+        order_by="AiChatMessage.created_at",
+    )
 
     def get_id(self):
         return str(self.user_id)
@@ -47,7 +57,7 @@ class User(UserMixin, db.Model):
 
     @property
     def display_name(self):
-        return self.name or self.email.split('@')[0]
+        return self.name or self.email.split("@")[0]
 
     @property
     def groq_api_key(self):
@@ -60,4 +70,4 @@ class User(UserMixin, db.Model):
         return bool(self.groq_api_key and self.groq_api_key.strip())
 
     def __repr__(self):
-        return f'<User {self.user_id}: {self.email}>'
+        return f"<User {self.user_id}: {self.email}>"

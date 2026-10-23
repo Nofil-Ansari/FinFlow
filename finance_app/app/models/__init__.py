@@ -15,8 +15,21 @@ from .financial_profile import FinancialProfile
 from .ai_chat import AiChatMessage
 
 __all__ = [
-    'User', 'Account', 'Category', 'Transaction', 'TransactionTag',
-    'Transfer', 'Budget', 'SavingsGoal', 'SavingsContribution',
-    'Investment', 'RecurringTransaction', 'Tag', 'AuditLog',
-    'ExchangeRate', 'Notification', 'FinancialProfile', 'AiChatMessage',
+    "User",
+    "Account",
+    "Category",
+    "Transaction",
+    "TransactionTag",
+    "Transfer",
+    "Budget",
+    "SavingsGoal",
+    "SavingsContribution",
+    "Investment",
+    "RecurringTransaction",
+    "Tag",
+    "AuditLog",
+    "ExchangeRate",
+    "Notification",
+    "FinancialProfile",
+    "AiChatMessage",
 ]

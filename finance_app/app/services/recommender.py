@@ -17,17 +17,24 @@ from ..models.transaction import Transaction
 from ..models.category import Category
 from ..models.financial_profile import FinancialProfile
 
-
 # ── Product substitution database (Pakistani market) ─────────────────────────
 SUBSTITUTIONS: Dict[str, Dict] = {
     "netflix": {
         "label": "Netflix",
         "alternatives": [
-            ("YouTube Premium Family", "PKR 540/mo shared", "split among 5 = PKR 108/person"),
+            (
+                "YouTube Premium Family",
+                "PKR 540/mo shared",
+                "split among 5 = PKR 108/person",
+            ),
             ("Tapmad TV", "PKR 250/mo", "local Pakistani content + sports"),
-            ("Rotate + cancel model", "~50% saving", "subscribe 1 month, binge, cancel"),
+            (
+                "Rotate + cancel model",
+                "~50% saving",
+                "subscribe 1 month, binge, cancel",
+            ),
         ],
-        "saving_tip": "Downgrade to mobile-only plan or share a family plan to cut cost 75%."
+        "saving_tip": "Downgrade to mobile-only plan or share a family plan to cut cost 75%.",
     },
     "spotify": {
         "label": "Spotify",
@@ -36,7 +43,7 @@ SUBSTITUTIONS: Dict[str, Dict] = {
             ("Spotify Student/Family", "PKR 230/mo", "50% off with family sharing"),
             ("JioSaavn", "PKR 99/mo", "large South Asian library"),
         ],
-        "saving_tip": "Spotify free with data saver mode costs nothing. Family plan = PKR 58/person."
+        "saving_tip": "Spotify free with data saver mode costs nothing. Family plan = PKR 58/person.",
     },
     "uber": {
         "label": "Uber",
@@ -45,7 +52,7 @@ SUBSTITUTIONS: Dict[str, Dict] = {
             ("Bykea", "PKR 30–100/trip", "motorcycle, fastest for short hops"),
             ("BRT / MetroBus pass", "PKR 1,500/mo", "unlimited rides"),
         ],
-        "saving_tip": "InDrive bids routinely come in 25–35% below Uber for the same route."
+        "saving_tip": "InDrive bids routinely come in 25–35% below Uber for the same route.",
     },
     "careem": {
         "label": "Careem",
@@ -54,34 +61,62 @@ SUBSTITUTIONS: Dict[str, Dict] = {
             ("Bykea", "PKR 30–100/trip", "motorcycle, fastest for distances under 5km"),
             ("MetroBus / BRT", "PKR 20–30/trip", "fixed route but very cheap"),
         ],
-        "saving_tip": "Careem Go is significantly cheaper than Careem Go+ — always pick base tier."
+        "saving_tip": "Careem Go is significantly cheaper than Careem Go+ — always pick base tier.",
     },
     "mcdonald": {
         "label": "McDonald's",
         "alternatives": [
-            ("Local broast house", "40–60% cheaper", "comparable quality, no brand markup"),
-            ("Student Biryani", "PKR 150–300/meal", "full meal vs PKR 800+ at McDonald's"),
+            (
+                "Local broast house",
+                "40–60% cheaper",
+                "comparable quality, no brand markup",
+            ),
+            (
+                "Student Biryani",
+                "PKR 150–300/meal",
+                "full meal vs PKR 800+ at McDonald's",
+            ),
             ("Meal prep at home", "PKR 50–100/meal", "batch cook on Sundays"),
         ],
-        "saving_tip": "McDonald's app has daily deals — always order via app, prices are 15–20% lower."
+        "saving_tip": "McDonald's app has daily deals — always order via app, prices are 15–20% lower.",
     },
     "kfc": {
         "label": "KFC",
         "alternatives": [
-            ("Local broast restaurant", "50% cheaper", "local broast is genuinely excellent"),
-            ("KFC Tuesday deal only", "PKR 299 combo", "cheapest day — plan meals around it"),
-            ("Air-fryer broast at home", "PKR 80–150/meal", "replicate KFC results at home"),
+            (
+                "Local broast restaurant",
+                "50% cheaper",
+                "local broast is genuinely excellent",
+            ),
+            (
+                "KFC Tuesday deal only",
+                "PKR 299 combo",
+                "cheapest day — plan meals around it",
+            ),
+            (
+                "Air-fryer broast at home",
+                "PKR 80–150/meal",
+                "replicate KFC results at home",
+            ),
         ],
-        "saving_tip": "KFC Tuesday is the best value fast-food deal in Pakistan — limit visits to Tuesdays."
+        "saving_tip": "KFC Tuesday is the best value fast-food deal in Pakistan — limit visits to Tuesdays.",
     },
     "daraz": {
         "label": "Daraz",
         "alternatives": [
-            ("OLX Pakistan", "used items 40–70% off", "electronics, furniture, clothes"),
-            ("Daraz 11.11 / Big Friday", "up to 70% off", "plan big purchases around sales"),
+            (
+                "OLX Pakistan",
+                "used items 40–70% off",
+                "electronics, furniture, clothes",
+            ),
+            (
+                "Daraz 11.11 / Big Friday",
+                "up to 70% off",
+                "plan big purchases around sales",
+            ),
             ("AliExpress direct", "10–30% cheaper", "same suppliers, no middleman"),
         ],
-        "saving_tip": "Add to Daraz wishlist and wait for Flash Sale — items regularly drop 20–50%."
+        "saving_tip": "Add to Daraz wishlist and wait for Flash Sale — items regularly drop 20–50%.",
     },
     "pharmacy": {
         "label": "Pharmacy",
@@ -90,16 +125,20 @@ SUBSTITUTIONS: Dict[str, Dict] = {
             ("Government dispensary", "PKR 0–50", "free or near-free for common meds"),
             ("Dawaai.pk", "10–25% cheaper", "delivery + verified generics"),
         ],
-        "saving_tip": "Generic paracetamol (PKR 12) = Panadol (PKR 80). Always ask for generics."
+        "saving_tip": "Generic paracetamol (PKR 12) = Panadol (PKR 80). Always ask for generics.",
     },
     "jazz": {
         "label": "Jazz (Mobile/Internet)",
         "alternatives": [
             ("Jazz Giga Max weekly", "PKR 55/week", "14GB — better per-GB value"),
             ("Zong 4G unlimited", "PKR 500/mo", "compare speeds in your area"),
-            ("PTCL Fiber + minimal mobile data", "combo approach", "fiber at home, low data out"),
+            (
+                "PTCL Fiber + minimal mobile data",
+                "combo approach",
+                "fiber at home, low data out",
+            ),
         ],
-        "saving_tip": "Jazz weekly bundles are consistently cheaper per GB than monthly packs."
+        "saving_tip": "Jazz weekly bundles are consistently cheaper per GB than monthly packs.",
     },
 }
 
@@ -145,8 +184,8 @@ class Recommendation:
     title: str
     detail: str
     category: str
-    priority: str              # high | medium | low
-    potential_saving: float     # estimated PKR annual saving
+    priority: str  # high | medium | low
+    potential_saving: float  # estimated PKR annual saving
     substitutions: List[tuple] = field(default_factory=list)
     merchants_detected: List[str] = field(default_factory=list)
 
@@ -154,14 +193,15 @@ class Recommendation:
 def _get_user_df(user_id: int) -> pd.DataFrame:
     """Load user expense transactions as a DataFrame."""
     transactions = (
-        Transaction.query
-        .filter_by(user_id=user_id, is_deleted=False, transaction_type='expense')
+        Transaction.query.filter_by(
+            user_id=user_id, is_deleted=False, transaction_type="expense"
+        )
         .join(Category, Transaction.category_id == Category.category_id, isouter=True)
         .add_columns(
             Transaction.amount,
             Transaction.transaction_date,
             Transaction.description,
-            Category.name.label('category_name')
+            Category.name.label("category_name"),
         )
         .all()
     )
@@ -171,16 +211,22 @@ def _get_user_df(user_id: int) -> pd.DataFrame:
 
     rows = []
     for txn in transactions:
-        rows.append({
-            'amount': float(txn.amount),
-            'date': txn.transaction_date.isoformat() if isinstance(txn.transaction_date, date) else str(txn.transaction_date),
-            'description': txn.description or 'Unknown',
-            'category': txn.category_name or 'Uncategorized',
-        })
+        rows.append(
+            {
+                "amount": float(txn.amount),
+                "date": (
+                    txn.transaction_date.isoformat()
+                    if isinstance(txn.transaction_date, date)
+                    else str(txn.transaction_date)
+                ),
+                "description": txn.description or "Unknown",
+                "category": txn.category_name or "Uncategorized",
+            }
+        )
 
     df = pd.DataFrame(rows)
-    df['date'] = pd.to_datetime(df['date'])
-    df['month'] = df['date'].dt.to_period('M').astype(str)
+    df["date"] = pd.to_datetime(df["date"])
+    df["month"] = df["date"].dt.to_period("M").astype(str)
     return df
 
 
@@ -193,7 +239,9 @@ def _detect_merchants(descriptions: pd.Series) -> Dict[str, int]:
     return dict(sorted(counts.items(), key=lambda x: -x[1]))
 
 
-def generate_recommendations(user_id: int, monthly_income: float = 80000) -> List[Recommendation]:
+def generate_recommendations(
+    user_id: int, monthly_income: float = 80000
+) -> List[Recommendation]:
     """Generate personalized PKR savings recommendations for the user."""
     from ..services.ai_alerts import _get_user_budgets
 
@@ -215,15 +263,17 @@ def generate_recommendations(user_id: int, monthly_income: float = 80000) -> Lis
         cat = subset["category"].mode().iloc[0] if len(subset) else "Miscellaneous"
         avg_per_month = subset["amount"].sum() / months
 
-        recs.append(Recommendation(
-            title=f"Switch from {info['label']} to these cheaper alternatives",
-            detail=info["saving_tip"],
-            category=cat,
-            priority="high" if avg_per_month > 1500 else "medium",
-            potential_saving=avg_per_month * 0.40 * 12,
-            substitutions=info["alternatives"],
-            merchants_detected=[info["label"]],
-        ))
+        recs.append(
+            Recommendation(
+                title=f"Switch from {info['label']} to these cheaper alternatives",
+                detail=info["saving_tip"],
+                category=cat,
+                priority="high" if avg_per_month > 1500 else "medium",
+                potential_saving=avg_per_month * 0.40 * 12,
+                substitutions=info["alternatives"],
+                merchants_detected=[info["label"]],
+            )
+        )
 
     # R2: Category budget recommendations
     for cat, budget in budgets.items():
@@ -233,13 +283,15 @@ def generate_recommendations(user_id: int, monthly_income: float = 80000) -> Lis
         avg = cat_monthly.mean()
         if avg > budget and cat in CATEGORY_TIPS:
             tip = CATEGORY_TIPS[cat][len(recs) % len(CATEGORY_TIPS[cat])]
-            recs.append(Recommendation(
-                title=f"Bring {cat} under PKR {budget:,.0f}/month",
-                detail=tip,
-                category=cat,
-                priority="high",
-                potential_saving=(avg - budget) * 12,
-            ))
+            recs.append(
+                Recommendation(
+                    title=f"Bring {cat} under PKR {budget:,.0f}/month",
+                    detail=tip,
+                    category=cat,
+                    priority="high",
+                    potential_saving=(avg - budget) * 12,
+                )
+            )
 
     # R3: Savings target
     savings_total = cat_totals.get("Savings", 0)
@@ -248,20 +300,30 @@ def generate_recommendations(user_id: int, monthly_income: float = 80000) -> Lis
         target = monthly_income * 0.20
         current = savings_total / months
         monthly_gap = target - current
-        recs.append(Recommendation(
-            title=f"Invest PKR {target:,.0f}/month to hit the 20% savings target",
-            detail=(
-                f"Start with PKR {min(monthly_gap, 5000):,.0f}/month via a standing transfer. "
-                f"NSCs pay 21% annually — your savings compound significantly."
-            ),
-            category="Savings",
-            priority="high",
-            potential_saving=monthly_gap * 12,
-            substitutions=[
-                ("National Savings Certificates", "21% p.a.", "safest, government-backed"),
-                ("Meezan Savings Account", "~13% p.a.", "Shariah-compliant, easy access"),
-            ],
-        ))
+        recs.append(
+            Recommendation(
+                title=f"Invest PKR {target:,.0f}/month to hit the 20% savings target",
+                detail=(
+                    f"Start with PKR {min(monthly_gap, 5000):,.0f}/month via a standing transfer. "
+                    f"NSCs pay 21% annually — your savings compound significantly."
+                ),
+                category="Savings",
+                priority="high",
+                potential_saving=monthly_gap * 12,
+                substitutions=[
+                    (
+                        "National Savings Certificates",
+                        "21% p.a.",
+                        "safest, government-backed",
+                    ),
+                    (
+                        "Meezan Savings Account",
+                        "~13% p.a.",
+                        "Shariah-compliant, easy access",
+                    ),
+                ],
+            )
+        )
 
     # Ensure at least 3 recommendations
     fallbacks = _fallback_recommendations()
@@ -280,21 +342,31 @@ def _fallback_recommendations() -> List[Recommendation]:
         Recommendation(
             title="Apply the 72-hour rule to purchases over PKR 3,000",
             detail="Add the item to a wishlist and wait 3 days before buying. Eliminates 30–40% of impulse buys.",
-            category="Shopping", priority="medium", potential_saving=15000,
+            category="Shopping",
+            priority="medium",
+            potential_saving=15000,
         ),
         Recommendation(
             title="Ask your pharmacist for generics — same drug, 40–80% cheaper",
             detail="Generic paracetamol (PKR 12) = Panadol (PKR 80). Works for 90% of common prescriptions.",
-            category="Healthcare", priority="low", potential_saving=8000,
+            category="Healthcare",
+            priority="low",
+            potential_saving=8000,
             substitutions=[
                 ("Generic paracetamol", "PKR 12", "identical to Panadol"),
-                ("Dawaai.pk online", "10–25% off", "verified generics with home delivery"),
+                (
+                    "Dawaai.pk online",
+                    "10–25% off",
+                    "verified generics with home delivery",
+                ),
             ],
         ),
         Recommendation(
             title="Consolidate streaming subscriptions to save 50%",
             detail="Subscribe to one service at a time, binge, cancel, rotate. Or share a family plan.",
-            category="Entertainment", priority="medium", potential_saving=12000,
+            category="Entertainment",
+            priority="medium",
+            potential_saving=12000,
         ),
     ]
 
@@ -330,16 +402,18 @@ def build_groq_context(user_id: int) -> str:
         it = p.get("income_type", "Salary")
         lines += [
             f"Income type        : {it}",
-            f"Credit score       : {cs} ({'Good' if cs>=720 else 'Fair' if cs>=650 else 'Poor'})",
-            f"Debt-to-income     : {dti:.0%} ({'OK' if dti<0.30 else 'High' if dti>0.45 else 'Moderate'})",
-            f"Savings rate       : {sr:.0%} ({'On track' if sr>=0.20 else 'Below target'})",
+            f"Credit score       : {cs} ({'Good' if cs >= 720 else 'Fair' if cs >= 650 else 'Poor'})",
+            f"Debt-to-income     : {dti:.0%} ({'OK' if dti < 0.30 else 'High' if dti > 0.45 else 'Moderate'})",
+            f"Savings rate       : {sr:.0%} ({'On track' if sr >= 0.20 else 'Below target'})",
             f"Financial stress   : {sl}",
             f"Cash flow          : {cf}",
-            f"Emergency fund     : {efm:.1f} months ({'Sufficient' if efm>=3 else 'Insufficient'})",
+            f"Emergency fund     : {efm:.1f} months ({'Sufficient' if efm >= 3 else 'Insufficient'})",
             f"Advice score       : {p.get('financial_advice_score', 50)}/100",
         ]
         if sl == "High":
-            lines.append("⚠️ USER IS UNDER HIGH FINANCIAL STRESS — be empathetic and focus on quick wins.")
+            lines.append(
+                "⚠️ USER IS UNDER HIGH FINANCIAL STRESS — be empathetic and focus on quick wins."
+            )
         if dti > 0.45:
             lines.append("⚠️ HIGH DEBT-TO-INCOME — prioritise debt reduction advice.")
         if efm < 1:
@@ -352,12 +426,20 @@ def build_groq_context(user_id: int) -> str:
         lines += ["", "=== SPENDING BY CATEGORY ==="]
         for cat, row in cat_summary.iterrows():
             pct = row["sum"] / total_spent * 100 if total_spent else 0
-            lines.append(f"  {cat}: PKR {row['sum']:,.0f} ({pct:.1f}%) — {int(row['count'])} txns")
+            lines.append(
+                f"  {cat}: PKR {row['sum']:,.0f} ({pct:.1f}%) — {int(row['count'])} txns"
+            )
 
-        top_merchants = df.groupby("description")["amount"].agg(["sum", "count"]).nlargest(10, "sum")
+        top_merchants = (
+            df.groupby("description")["amount"]
+            .agg(["sum", "count"])
+            .nlargest(10, "sum")
+        )
         lines += ["", "=== TOP 10 MERCHANTS ==="]
         for desc, row in top_merchants.iterrows():
-            lines.append(f"  {desc}: PKR {row['sum']:,.0f} ({int(row['count'])} visits)")
+            lines.append(
+                f"  {desc}: PKR {row['sum']:,.0f} ({int(row['count'])} visits)"
+            )
 
         merchant_hits = _detect_merchants(df["description"])
         if merchant_hits:

@@ -7,28 +7,39 @@ from ..extensions import db
 from ..models.investment import Investment
 
 
-@investments_bp.route('/')
+@investments_bp.route("/")
 @login_required
 def index():
-    investments = Investment.query.filter_by(user_id=current_user.user_id).order_by(
-        Investment.sold_date.asc().nullsfirst(), Investment.purchase_date.desc()
-    ).all()
+    investments = (
+        Investment.query.filter_by(user_id=current_user.user_id)
+        .order_by(
+            Investment.sold_date.asc().nullsfirst(), Investment.purchase_date.desc()
+        )
+        .all()
+    )
 
     # Portfolio summary by asset type (active only)
-    summary = db.session.query(
-        Investment.asset_type,
-        func.count(Investment.investment_id).label('count'),
-        func.sum(Investment.purchase_amount).label('total_invested'),
-        func.sum(Investment.current_value).label('total_value'),
-    ).filter(
-        Investment.user_id == current_user.user_id,
-        Investment.sold_date.is_(None),
-    ).group_by(Investment.asset_type).all()
+    summary = (
+        db.session.query(
+            Investment.asset_type,
+            func.count(Investment.investment_id).label("count"),
+            func.sum(Investment.purchase_amount).label("total_invested"),
+            func.sum(Investment.current_value).label("total_value"),
+        )
+        .filter(
+            Investment.user_id == current_user.user_id,
+            Investment.sold_date.is_(None),
+        )
+        .group_by(Investment.asset_type)
+        .all()
+    )
 
-    return render_template('investments/list.html', investments=investments, summary=summary)
+    return render_template(
+        "investments/list.html", investments=investments, summary=summary
+    )
 
 
-@investments_bp.route('/add', methods=['GET', 'POST'])
+@investments_bp.route("/add", methods=["GET", "POST"])
 @login_required
 def add():
     form = InvestmentForm()
@@ -45,13 +56,13 @@ def add():
         )
         db.session.add(inv)
         db.session.commit()
-        flash('Investment added!', 'success')
-        return redirect(url_for('investments.index'))
+        flash("Investment added!", "success")
+        return redirect(url_for("investments.index"))
 
-    return render_template('investments/form.html', form=form, title='Add Investment')
+    return render_template("investments/form.html", form=form, title="Add Investment")
 
 
-@investments_bp.route('/edit/<int:inv_id>', methods=['GET', 'POST'])
+@investments_bp.route("/edit/<int:inv_id>", methods=["GET", "POST"])
 @login_required
 def edit(inv_id):
     inv = Investment.query.filter_by(
@@ -68,13 +79,13 @@ def edit(inv_id):
         inv.currency = form.currency.data
         inv.notes = form.notes.data
         db.session.commit()
-        flash('Investment updated!', 'success')
-        return redirect(url_for('investments.index'))
+        flash("Investment updated!", "success")
+        return redirect(url_for("investments.index"))
 
-    return render_template('investments/form.html', form=form, title='Edit Investment')
+    return render_template("investments/form.html", form=form, title="Edit Investment")
 
 
-@investments_bp.route('/sell/<int:inv_id>', methods=['GET', 'POST'])
+@investments_bp.route("/sell/<int:inv_id>", methods=["GET", "POST"])
 @login_required
 def sell(inv_id):
     inv = Investment.query.filter_by(
@@ -82,21 +93,24 @@ def sell(inv_id):
     ).first_or_404()
 
     if inv.is_sold:
-        flash('This investment has already been sold.', 'warning')
-        return redirect(url_for('investments.index'))
+        flash("This investment has already been sold.", "warning")
+        return redirect(url_for("investments.index"))
 
     form = SellForm()
     if form.validate_on_submit():
         inv.sold_amount = form.sold_amount.data
         inv.sold_date = form.sold_date.data
         db.session.commit()
-        flash(f'Investment sold! Realized gain/loss: {inv.realized_gain_loss:,.0f}', 'success')
-        return redirect(url_for('investments.index'))
+        flash(
+            f"Investment sold! Realized gain/loss: {inv.realized_gain_loss:,.0f}",
+            "success",
+        )
+        return redirect(url_for("investments.index"))
 
-    return render_template('investments/sell.html', form=form, investment=inv)
+    return render_template("investments/sell.html", form=form, investment=inv)
 
 
-@investments_bp.route('/delete/<int:inv_id>', methods=['POST'])
+@investments_bp.route("/delete/<int:inv_id>", methods=["POST"])
 @login_required
 def delete(inv_id):
     inv = Investment.query.filter_by(
@@ -104,5 +118,5 @@ def delete(inv_id):
     ).first_or_404()
     db.session.delete(inv)
     db.session.commit()
-    flash('Investment deleted.', 'info')
-    return redirect(url_for('investments.index'))
+    flash("Investment deleted.", "info")
+    return redirect(url_for("investments.index"))

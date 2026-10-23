@@ -38,18 +38,18 @@ from app.services.credential_manager import CredentialManager, mask_secret
 
 class ApiHandlingTestCase(unittest.TestCase):
     def setUp(self):
-        self.app = create_app('testing')
-        self.app.config['SECRET_KEY'] = 'test-secret-key-12345'
+        self.app = create_app("testing")
+        self.app.config["SECRET_KEY"] = "test-secret-key-12345"
         self.app_context = self.app.app_context()
         self.app_context.push()
         db.create_all()
 
         # Seed primary test user
         self.user = User(
-            name='Crypto Test User',
-            email='cryptouser@financeflow.com',
+            name="Crypto Test User",
+            email="cryptouser@financeflow.com",
         )
-        self.user.set_password('SecurePass123!')
+        self.user.set_password("SecurePass123!")
         db.session.add(self.user)
         db.session.commit()
 
@@ -69,7 +69,7 @@ class ApiHandlingTestCase(unittest.TestCase):
 
         self.assertIsNotNone(encrypted)
         self.assertNotEqual(encrypted, raw_key)
-        self.assertTrue(encrypted.startswith('gAAAAA'))
+        self.assertTrue(encrypted.startswith("gAAAAA"))
 
         # Decrypt
         decrypted = decrypt_credential(encrypted)
@@ -117,7 +117,7 @@ class ApiHandlingTestCase(unittest.TestCase):
         # Check raw database value
         stored_raw = profile.raw_encrypted_key
         self.assertIsNotNone(stored_raw)
-        self.assertTrue(stored_raw.startswith('gAAAAA'))
+        self.assertTrue(stored_raw.startswith("gAAAAA"))
         self.assertNotEqual(stored_raw, raw_api_key)
 
         # Check property access
@@ -149,10 +149,10 @@ class ApiHandlingTestCase(unittest.TestCase):
         profile.groq_api_key = "gsk_super_secret_key"
         data = profile.to_dict()
 
-        self.assertNotIn('groq_api_key', data)
-        self.assertNotIn('_groq_api_key', data)
-        self.assertIn('has_custom_api_key', data)
-        self.assertTrue(data['has_custom_api_key'])
+        self.assertNotIn("groq_api_key", data)
+        self.assertNotIn("_groq_api_key", data)
+        self.assertIn("has_custom_api_key", data)
+        self.assertTrue(data["has_custom_api_key"])
 
     # ─────────────────────────────────────────────────────────────
     # 3. Resilient HTTP Infrastructure & Sanitization Tests
@@ -188,22 +188,22 @@ class ApiHandlingTestCase(unittest.TestCase):
     def test_sanitize_headers_masks_auth_tokens(self):
         """Authorization and API key headers must be masked."""
         headers = {
-            'Authorization': 'Bearer gsk_live_token_12345',
-            'X-Api-Key': 'key_abc',
-            'Content-Type': 'application/json',
+            "Authorization": "Bearer gsk_live_token_12345",
+            "X-Api-Key": "key_abc",
+            "Content-Type": "application/json",
         }
         sanitized = sanitize_headers(headers)
-        self.assertNotIn('gsk_live_token_12345', sanitized['Authorization'])
-        self.assertIn('Masked', sanitized['Authorization'])
-        self.assertEqual(sanitized['Content-Type'], 'application/json')
+        self.assertNotIn("gsk_live_token_12345", sanitized["Authorization"])
+        self.assertIn("Masked", sanitized["Authorization"])
+        self.assertEqual(sanitized["Content-Type"], "application/json")
 
     def test_parse_retry_after_header(self):
         """Verify parsing of standard Retry-After HTTP headers."""
         resp_mock = MagicMock()
-        resp_mock.headers = {'Retry-After': '14'}
+        resp_mock.headers = {"Retry-After": "14"}
         self.assertEqual(parse_retry_after(resp_mock), 14)
 
-        resp_mock.headers = {'Retry-After': 'invalid_date_format'}
+        resp_mock.headers = {"Retry-After": "invalid_date_format"}
         self.assertEqual(parse_retry_after(resp_mock), 5)  # Safe default fallback
 
         self.assertIsNone(parse_retry_after(None))
@@ -217,40 +217,40 @@ class ApiHandlingTestCase(unittest.TestCase):
         # 1. Initially nothing configured
         key, source = GroqMiddleware.resolve_api_key(self.user.user_id)
         self.assertIsNone(key)
-        self.assertEqual(source, 'none')
+        self.assertEqual(source, "none")
 
         # 2. Configured at app.config level
-        self.app.config['GROQ_API_KEY'] = 'gsk_from_app_config_123'
+        self.app.config["GROQ_API_KEY"] = "gsk_from_app_config_123"
         key, source = GroqMiddleware.resolve_api_key(self.user.user_id)
-        self.assertEqual(key, 'gsk_from_app_config_123')
-        self.assertEqual(source, 'env')
+        self.assertEqual(key, "gsk_from_app_config_123")
+        self.assertEqual(source, "env")
 
         # 3. User overrides with personal key
         profile = FinancialProfile(user_id=self.user.user_id)
-        profile.groq_api_key = 'gsk_user_override_456'
+        profile.groq_api_key = "gsk_user_override_456"
         db.session.add(profile)
         db.session.commit()
 
         key, source = GroqMiddleware.resolve_api_key(self.user.user_id)
-        self.assertEqual(key, 'gsk_user_override_456')
-        self.assertEqual(source, 'user')
+        self.assertEqual(key, "gsk_user_override_456")
+        self.assertEqual(source, "user")
 
     def test_groq_middleware_chat_rate_limit_retry_after_message(self):
         """When receiving HTTP 429 with Retry-After, user is advised of wait duration."""
         profile = FinancialProfile(user_id=self.user.user_id)
-        profile.groq_api_key = 'gsk_user_test_key'
+        profile.groq_api_key = "gsk_user_test_key"
         db.session.add(profile)
         db.session.commit()
 
-        with patch('app.services.groq_middleware.requests.post') as mock_post:
+        with patch("app.services.groq_middleware.requests.post") as mock_post:
             mock_resp = MagicMock()
             mock_resp.status_code = 429
-            mock_resp.headers = {'Retry-After': '25'}
+            mock_resp.headers = {"Retry-After": "25"}
             mock_post.return_value = mock_resp
 
             result = GroqMiddleware.chat(self.user.user_id, "How can I invest?")
-            self.assertTrue(result['is_fallback'])
-            self.assertIn("25 seconds", result['response'])
+            self.assertTrue(result["is_fallback"])
+            self.assertIn("25 seconds", result["response"])
 
     # ─────────────────────────────────────────────────────────────
     # 5. Currency Service Resilience & Graceful Degradation
@@ -261,17 +261,17 @@ class ApiHandlingTestCase(unittest.TestCase):
         # Seed an older rate in DB
         old_time = datetime.utcnow() - timedelta(hours=3)
         rate = ExchangeRate(
-            base_currency='USD',
-            target_currency='PKR',
+            base_currency="USD",
+            target_currency="PKR",
             rate=278.50,
             fetched_at=old_time,
         )
         db.session.add(rate)
         db.session.commit()
 
-        self.app.config['OXR_APP_ID'] = 'oxr_test_id_123'
+        self.app.config["OXR_APP_ID"] = "oxr_test_id_123"
 
-        with patch('app.services.currency.requests.get') as mock_get:
+        with patch("app.services.currency.requests.get") as mock_get:
             # Simulate external API network failure / timeout
             mock_get.side_effect = requests.exceptions.ConnectionError(
                 "Failed to establish a connection to https://openexchangerates.org/api/latest.json?app_id=oxr_test_id_123"
@@ -282,7 +282,7 @@ class ApiHandlingTestCase(unittest.TestCase):
             self.assertTrue(success)
 
             # Confirm rate was preserved
-            pkr_rate = ExchangeRate.query.filter_by(target_currency='PKR').first()
+            pkr_rate = ExchangeRate.query.filter_by(target_currency="PKR").first()
             self.assertIsNotNone(pkr_rate)
             self.assertEqual(pkr_rate.rate, 278.50)
 
@@ -292,25 +292,25 @@ class ApiHandlingTestCase(unittest.TestCase):
 
     def test_credential_manager_audit_does_not_leak_keys(self):
         """Auditing credentials returns masked status without exposing raw values."""
-        self.app.config['GROQ_API_KEY'] = 'gsk_secret_1234567890abcdef'
-        self.app.config['OXR_APP_ID'] = 'oxr_secret_app_id_9999'
+        self.app.config["GROQ_API_KEY"] = "gsk_secret_1234567890abcdef"
+        self.app.config["OXR_APP_ID"] = "oxr_secret_app_id_9999"
 
         audit_results = CredentialManager.audit_system_credentials()
         self.assertIsInstance(audit_results, list)
 
-        groq_cred = next(c for c in audit_results if c['key'] == 'GROQ_API_KEY')
-        self.assertTrue(groq_cred['configured'])
-        self.assertNotIn('gsk_secret_1234567890abcdef', groq_cred['masked_value'])
-        self.assertIn('••••••••', groq_cred['masked_value'])
+        groq_cred = next(c for c in audit_results if c["key"] == "GROQ_API_KEY")
+        self.assertTrue(groq_cred["configured"])
+        self.assertNotIn("gsk_secret_1234567890abcdef", groq_cred["masked_value"])
+        self.assertIn("••••••••", groq_cred["masked_value"])
 
     def test_credential_manager_safe_prompt_command(self):
         """Prompt command must format with hidden typing (read -s) and exact target path."""
-        cmd = CredentialManager.generate_safe_prompt_command('GROQ_API_KEY', '.env')
-        self.assertIn('read -s val', cmd)
-        self.assertIn('GROQ_API_KEY', cmd)
+        cmd = CredentialManager.generate_safe_prompt_command("GROQ_API_KEY", ".env")
+        self.assertIn("read -s val", cmd)
+        self.assertIn("GROQ_API_KEY", cmd)
         self.assertIn('>> ".env"', cmd)
-        self.assertIn('(typing hidden)', cmd)
+        self.assertIn("(typing hidden)", cmd)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

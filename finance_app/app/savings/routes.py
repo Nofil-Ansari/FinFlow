@@ -8,16 +8,18 @@ from ..models.account import Account
 from ..services.savings import contribute_to_goal
 
 
-@savings_bp.route('/')
+@savings_bp.route("/")
 @login_required
 def index():
-    goals = SavingsGoal.query.filter_by(
-        user_id=current_user.user_id, is_deleted=False
-    ).order_by(SavingsGoal.status.asc(), SavingsGoal.deadline.asc()).all()
-    return render_template('savings/list.html', goals=goals)
+    goals = (
+        SavingsGoal.query.filter_by(user_id=current_user.user_id, is_deleted=False)
+        .order_by(SavingsGoal.status.asc(), SavingsGoal.deadline.asc())
+        .all()
+    )
+    return render_template("savings/list.html", goals=goals)
 
 
-@savings_bp.route('/add', methods=['GET', 'POST'])
+@savings_bp.route("/add", methods=["GET", "POST"])
 @login_required
 def add():
     form = SavingsGoalForm()
@@ -30,13 +32,13 @@ def add():
         )
         db.session.add(goal)
         db.session.commit()
-        flash('Savings goal created!', 'success')
-        return redirect(url_for('savings.index'))
+        flash("Savings goal created!", "success")
+        return redirect(url_for("savings.index"))
 
-    return render_template('savings/form.html', form=form, title='Add Savings Goal')
+    return render_template("savings/form.html", form=form, title="Add Savings Goal")
 
 
-@savings_bp.route('/edit/<int:goal_id>', methods=['GET', 'POST'])
+@savings_bp.route("/edit/<int:goal_id>", methods=["GET", "POST"])
 @login_required
 def edit(goal_id):
     goal = SavingsGoal.query.filter_by(
@@ -49,13 +51,13 @@ def edit(goal_id):
         goal.target_amount = form.target_amount.data
         goal.deadline = form.deadline.data
         db.session.commit()
-        flash('Goal updated!', 'success')
-        return redirect(url_for('savings.index'))
+        flash("Goal updated!", "success")
+        return redirect(url_for("savings.index"))
 
-    return render_template('savings/form.html', form=form, title='Edit Goal')
+    return render_template("savings/form.html", form=form, title="Edit Goal")
 
 
-@savings_bp.route('/contribute/<int:goal_id>', methods=['GET', 'POST'])
+@savings_bp.route("/contribute/<int:goal_id>", methods=["GET", "POST"])
 @login_required
 def contribute(goal_id):
     goal = SavingsGoal.query.filter_by(
@@ -66,8 +68,8 @@ def contribute(goal_id):
     accounts = Account.query.filter_by(
         user_id=current_user.user_id, is_deleted=False, is_active=True
     ).all()
-    form.account_id.choices = [(0, '-- No account deduction --')] + [
-        (a.account_id, f'{a.account_name} ({a.currency})') for a in accounts
+    form.account_id.choices = [(0, "-- No account deduction --")] + [
+        (a.account_id, f"{a.account_name} ({a.currency})") for a in accounts
     ]
 
     if form.validate_on_submit():
@@ -80,15 +82,15 @@ def contribute(goal_id):
                 user_id=current_user.user_id,
                 note=form.note.data,
             )
-            flash('Contribution added!', 'success')
-            return redirect(url_for('savings.index'))
+            flash("Contribution added!", "success")
+            return redirect(url_for("savings.index"))
         except ValueError as e:
-            flash(str(e), 'danger')
+            flash(str(e), "danger")
 
-    return render_template('savings/contribute.html', form=form, goal=goal)
+    return render_template("savings/contribute.html", form=form, goal=goal)
 
 
-@savings_bp.route('/delete/<int:goal_id>', methods=['POST'])
+@savings_bp.route("/delete/<int:goal_id>", methods=["POST"])
 @login_required
 def delete(goal_id):
     goal = SavingsGoal.query.filter_by(
@@ -96,5 +98,5 @@ def delete(goal_id):
     ).first_or_404()
     goal.soft_delete()
     db.session.commit()
-    flash('Goal cancelled.', 'info')
-    return redirect(url_for('savings.index'))
+    flash("Goal cancelled.", "info")
+    return redirect(url_for("savings.index"))

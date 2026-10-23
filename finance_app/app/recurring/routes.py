@@ -11,16 +11,18 @@ from ..models.category import Category
 from ..services.audit import log_action
 
 
-@recurring_bp.route('/')
+@recurring_bp.route("/")
 @login_required
 def index():
-    items = RecurringTransaction.query.filter_by(
-        user_id=current_user.user_id
-    ).order_by(RecurringTransaction.next_due_date.asc()).all()
-    return render_template('recurring/list.html', items=items, today=date.today())
+    items = (
+        RecurringTransaction.query.filter_by(user_id=current_user.user_id)
+        .order_by(RecurringTransaction.next_due_date.asc())
+        .all()
+    )
+    return render_template("recurring/list.html", items=items, today=date.today())
 
 
-@recurring_bp.route('/add', methods=['GET', 'POST'])
+@recurring_bp.route("/add", methods=["GET", "POST"])
 @login_required
 def add():
     form = RecurringForm()
@@ -39,13 +41,15 @@ def add():
         )
         db.session.add(item)
         db.session.commit()
-        flash('Recurring transaction created!', 'success')
-        return redirect(url_for('recurring.index'))
+        flash("Recurring transaction created!", "success")
+        return redirect(url_for("recurring.index"))
 
-    return render_template('recurring/form.html', form=form, title='Add Recurring Transaction')
+    return render_template(
+        "recurring/form.html", form=form, title="Add Recurring Transaction"
+    )
 
 
-@recurring_bp.route('/edit/<int:rec_id>', methods=['GET', 'POST'])
+@recurring_bp.route("/edit/<int:rec_id>", methods=["GET", "POST"])
 @login_required
 def edit(rec_id):
     item = RecurringTransaction.query.filter_by(
@@ -64,13 +68,15 @@ def edit(rec_id):
         item.next_due_date = form.next_due_date.data
         item.description = form.description.data
         db.session.commit()
-        flash('Recurring transaction updated!', 'success')
-        return redirect(url_for('recurring.index'))
+        flash("Recurring transaction updated!", "success")
+        return redirect(url_for("recurring.index"))
 
-    return render_template('recurring/form.html', form=form, title='Edit Recurring Transaction')
+    return render_template(
+        "recurring/form.html", form=form, title="Edit Recurring Transaction"
+    )
 
 
-@recurring_bp.route('/toggle/<int:rec_id>', methods=['POST'])
+@recurring_bp.route("/toggle/<int:rec_id>", methods=["POST"])
 @login_required
 def toggle(rec_id):
     item = RecurringTransaction.query.filter_by(
@@ -78,12 +84,12 @@ def toggle(rec_id):
     ).first_or_404()
     item.is_active = not item.is_active
     db.session.commit()
-    status = 'activated' if item.is_active else 'paused'
-    flash(f'Recurring transaction {status}.', 'info')
-    return redirect(url_for('recurring.index'))
+    status = "activated" if item.is_active else "paused"
+    flash(f"Recurring transaction {status}.", "info")
+    return redirect(url_for("recurring.index"))
 
 
-@recurring_bp.route('/process', methods=['POST'])
+@recurring_bp.route("/process", methods=["POST"])
 @login_required
 def process_due():
     """Process all due recurring transactions — create actual transactions."""
@@ -103,31 +109,31 @@ def process_due():
             amount=item.amount,
             transaction_type=item.transaction_type,
             transaction_date=today,
-            description=f'[Auto] {item.description}',
+            description=f"[Auto] {item.description}",
         )
         db.session.add(txn)
 
         # Advance next due date
         item.last_processed_date = today
-        if item.frequency == 'daily':
+        if item.frequency == "daily":
             item.next_due_date = today + timedelta(days=1)
-        elif item.frequency == 'weekly':
+        elif item.frequency == "weekly":
             item.next_due_date = today + timedelta(weeks=1)
-        elif item.frequency == 'monthly':
+        elif item.frequency == "monthly":
             month = today.month + 1 if today.month < 12 else 1
             year = today.year if today.month < 12 else today.year + 1
             item.next_due_date = today.replace(year=year, month=month)
-        elif item.frequency == 'yearly':
+        elif item.frequency == "yearly":
             item.next_due_date = today.replace(year=today.year + 1)
 
         count += 1
 
     db.session.commit()
-    flash(f'Processed {count} recurring transaction(s).', 'success')
-    return redirect(url_for('recurring.index'))
+    flash(f"Processed {count} recurring transaction(s).", "success")
+    return redirect(url_for("recurring.index"))
 
 
-@recurring_bp.route('/delete/<int:rec_id>', methods=['POST'])
+@recurring_bp.route("/delete/<int:rec_id>", methods=["POST"])
 @login_required
 def delete(rec_id):
     item = RecurringTransaction.query.filter_by(
@@ -135,8 +141,8 @@ def delete(rec_id):
     ).first_or_404()
     db.session.delete(item)
     db.session.commit()
-    flash('Recurring transaction deleted.', 'info')
-    return redirect(url_for('recurring.index'))
+    flash("Recurring transaction deleted.", "info")
+    return redirect(url_for("recurring.index"))
 
 
 def _populate_choices(form):
@@ -148,4 +154,6 @@ def _populate_choices(form):
     categories = Category.query.filter(
         db.or_(Category.user_id == current_user.user_id, Category.user_id.is_(None))
     ).all()
-    form.category_id.choices = [(c.category_id, f'{c.icon} {c.name}') for c in categories]
+    form.category_id.choices = [
+        (c.category_id, f"{c.icon} {c.name}") for c in categories
+    ]

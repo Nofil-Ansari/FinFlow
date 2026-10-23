@@ -30,28 +30,41 @@ from ..models.category import Category
 logger = logging.getLogger(__name__)
 
 # Model artifact directory (relative to app instance)
-MODEL_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'ml_models')
+MODEL_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "ml_models"
+)
 
 FEATURE_COLS = [
-    "cat_encoded", "month_ord", "month_sin", "month_cos",
-    "num_transactions", "avg_transaction", "max_transaction",
-    "lag_1", "lag_2", "lag_3",
-    "rolling_mean_3", "rolling_std_3",
-    "lag1_zscore", "cat_share", "spend_momentum",
+    "cat_encoded",
+    "month_ord",
+    "month_sin",
+    "month_cos",
+    "num_transactions",
+    "avg_transaction",
+    "max_transaction",
+    "lag_1",
+    "lag_2",
+    "lag_3",
+    "rolling_mean_3",
+    "rolling_std_3",
+    "lag1_zscore",
+    "cat_share",
+    "spend_momentum",
 ]
 
 
 def _get_expense_df(user_id: int) -> pd.DataFrame:
     """Load expense transactions for ML processing."""
     transactions = (
-        Transaction.query
-        .filter_by(user_id=user_id, is_deleted=False, transaction_type='expense')
+        Transaction.query.filter_by(
+            user_id=user_id, is_deleted=False, transaction_type="expense"
+        )
         .join(Category, Transaction.category_id == Category.category_id, isouter=True)
         .add_columns(
             Transaction.amount,
             Transaction.transaction_date,
             Transaction.description,
-            Category.name.label('category_name')
+            Category.name.label("category_name"),
         )
         .all()
     )
@@ -61,16 +74,22 @@ def _get_expense_df(user_id: int) -> pd.DataFrame:
 
     rows = []
     for txn in transactions:
-        rows.append({
-            'amount': float(txn.amount),
-            'date': txn.transaction_date.isoformat() if isinstance(txn.transaction_date, date) else str(txn.transaction_date),
-            'description': txn.description or 'Unknown',
-            'category': txn.category_name or 'Uncategorized',
-        })
+        rows.append(
+            {
+                "amount": float(txn.amount),
+                "date": (
+                    txn.transaction_date.isoformat()
+                    if isinstance(txn.transaction_date, date)
+                    else str(txn.transaction_date)
+                ),
+                "description": txn.description or "Unknown",
+                "category": txn.category_name or "Uncategorized",
+            }
+        )
 
     df = pd.DataFrame(rows)
-    df['date'] = pd.to_datetime(df['date'])
-    df['month'] = df['date'].dt.to_period('M').astype(str)
+    df["date"] = pd.to_datetime(df["date"])
+    df["month"] = df["date"].dt.to_period("M").astype(str)
     return df
 
 
@@ -109,13 +128,11 @@ def _build_features(df: pd.DataFrame) -> Tuple[pd.DataFrame, LabelEncoder]:
     monthly["lag_3"] = monthly.groupby("category")["total_spent"].shift(3)
 
     # Rolling statistics
-    monthly["rolling_mean_3"] = (
-        monthly.groupby("category")["total_spent"]
-        .transform(lambda x: x.shift(1).rolling(3, min_periods=1).mean())
+    monthly["rolling_mean_3"] = monthly.groupby("category")["total_spent"].transform(
+        lambda x: x.shift(1).rolling(3, min_periods=1).mean()
     )
-    monthly["rolling_std_3"] = (
-        monthly.groupby("category")["total_spent"]
-        .transform(lambda x: x.shift(1).rolling(3, min_periods=1).std().fillna(0))
+    monthly["rolling_std_3"] = monthly.groupby("category")["total_spent"].transform(
+        lambda x: x.shift(1).rolling(3, min_periods=1).std().fillna(0)
     )
 
     # Derived features
@@ -161,12 +178,19 @@ def train_models(user_id: int) -> Optional[Dict]:
 
     models = {
         "Gradient Boosting": GradientBoostingRegressor(
-            n_estimators=300, learning_rate=0.05, max_depth=4,
-            subsample=0.8, min_samples_leaf=3, random_state=42,
+            n_estimators=300,
+            learning_rate=0.05,
+            max_depth=4,
+            subsample=0.8,
+            min_samples_leaf=3,
+            random_state=42,
         ),
         "Random Forest": RandomForestRegressor(
-            n_estimators=300, max_depth=8, min_samples_leaf=3,
-            max_features=0.7, random_state=42,
+            n_estimators=300,
+            max_depth=8,
+            min_samples_leaf=3,
+            max_features=0.7,
+            random_state=42,
         ),
     }
 
@@ -186,17 +210,20 @@ def train_models(user_id: int) -> Optional[Dict]:
     best_model = results[best_name]["model"]
 
     os.makedirs(MODEL_DIR, exist_ok=True)
-    model_path = os.path.join(MODEL_DIR, f'user_{user_id}_model.pkl')
+    model_path = os.path.join(MODEL_DIR, f"user_{user_id}_model.pkl")
     with open(model_path, "wb") as f:
-        pickle.dump({
-            "model": best_model,
-            "encoder": le,
-            "feature_cols": FEATURE_COLS,
-            "best_name": best_name,
-        }, f)
+        pickle.dump(
+            {
+                "model": best_model,
+                "encoder": le,
+                "feature_cols": FEATURE_COLS,
+                "best_name": best_name,
+            },
+            f,
+        )
 
     return {
-        name: {k: v for k, v in metrics.items() if k != 'model'}
+        name: {k: v for k, v in metrics.items() if k != "model"}
         for name, metrics in results.items()
     }
 
@@ -207,7 +234,7 @@ def predict_next_month(user_id: int) -> Optional[pd.DataFrame]:
     Returns DataFrame with columns [category, predicted_next_month],
     or None if no model exists and insufficient data to train.
     """
-    model_path = os.path.join(MODEL_DIR, f'user_{user_id}_model.pkl')
+    model_path = os.path.join(MODEL_DIR, f"user_{user_id}_model.pkl")
 
     df = _get_expense_df(user_id)
     if df.empty:
@@ -234,10 +261,7 @@ def predict_next_month(user_id: int) -> Optional[pd.DataFrame]:
         return None
 
     latest = (
-        features_df.sort_values("month_ord")
-        .groupby("category")
-        .last()
-        .reset_index()
+        features_df.sort_values("month_ord").groupby("category").last().reset_index()
     )
 
     next_ord = latest["month_ord"] + 1
@@ -250,8 +274,12 @@ def predict_next_month(user_id: int) -> Optional[pd.DataFrame]:
     pred_input["lag_3"] = latest["lag_2"]
     pred_input["lag_2"] = latest["lag_1"]
     pred_input["lag_1"] = latest["total_spent"]
-    pred_input["rolling_mean_3"] = (latest["total_spent"] + latest["lag_1"] + latest["lag_2"]) / 3
-    pred_input["rolling_std_3"] = latest[["total_spent", "lag_1", "lag_2"]].std(axis=1).fillna(0)
+    pred_input["rolling_mean_3"] = (
+        latest["total_spent"] + latest["lag_1"] + latest["lag_2"]
+    ) / 3
+    pred_input["rolling_std_3"] = (
+        latest[["total_spent", "lag_1", "lag_2"]].std(axis=1).fillna(0)
+    )
     pred_input["spend_momentum"] = latest["total_spent"] - latest["lag_1"]
 
     cat_mean = pred_input.groupby("category")["lag_1"].transform("mean")
@@ -266,4 +294,6 @@ def predict_next_month(user_id: int) -> Optional[pd.DataFrame]:
 
     result = pred_input[["category"]].copy()
     result["predicted_next_month"] = np.round(preds, 2)
-    return result.sort_values("predicted_next_month", ascending=False).reset_index(drop=True)
+    return result.sort_values("predicted_next_month", ascending=False).reset_index(
+        drop=True
+    )

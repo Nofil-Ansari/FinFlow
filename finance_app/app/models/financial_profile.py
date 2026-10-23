@@ -1,4 +1,5 @@
 """Financial health profile — Kaggle-calibrated metrics for the AI advisor."""
+
 from datetime import datetime
 from typing import Optional
 from ..extensions import db
@@ -11,25 +12,33 @@ class FinancialProfile(db.Model):
     15 Kaggle-calibrated metrics powering the financial health score,
     LLM context injection, and personalized recommendation weighting.
     """
-    __tablename__ = 'financial_profiles'
+
+    __tablename__ = "financial_profiles"
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(
-        db.Integer, db.ForeignKey('users.user_id'),
-        nullable=False, unique=True
+        db.Integer, db.ForeignKey("users.user_id"), nullable=False, unique=True
     )
 
     # --- Core financial metrics ---
     monthly_income_pkr = db.Column(db.Float, default=80000.0)
-    income_type = db.Column(db.String(50), default='Salary')  # Salary, Business, Freelance, etc.
+    income_type = db.Column(
+        db.String(50), default="Salary"
+    )  # Salary, Business, Freelance, etc.
     credit_score = db.Column(db.Integer, default=680)
     debt_to_income_ratio = db.Column(db.Float, default=0.35)
     savings_rate = db.Column(db.Float, default=0.12)
 
     # --- Status indicators ---
-    financial_stress_level = db.Column(db.String(20), default='Medium')  # Low, Medium, High
-    cash_flow_status = db.Column(db.String(20), default='Neutral')      # Positive, Neutral, Negative
-    financial_scenario = db.Column(db.String(30), default='normal')     # normal, high_inflation, emergency
+    financial_stress_level = db.Column(
+        db.String(20), default="Medium"
+    )  # Low, Medium, High
+    cash_flow_status = db.Column(
+        db.String(20), default="Neutral"
+    )  # Positive, Neutral, Negative
+    financial_scenario = db.Column(
+        db.String(30), default="normal"
+    )  # normal, high_inflation, emergency
 
     # --- Fund & liability tracking ---
     emergency_fund_pkr = db.Column(db.Float, default=0.0)
@@ -45,8 +54,8 @@ class FinancialProfile(db.Model):
     financial_advice_score = db.Column(db.Integer, default=50)
 
     # --- AI / Groq LLM Configuration (Encrypted at rest) ---
-    _groq_api_key = db.Column('groq_api_key', db.String(255), nullable=True)
-    preferred_model = db.Column(db.String(100), default='llama-3.3-70b-versatile')
+    _groq_api_key = db.Column("groq_api_key", db.String(255), nullable=True)
+    preferred_model = db.Column(db.String(100), default="llama-3.3-70b-versatile")
 
     @property
     def groq_api_key(self) -> Optional[str]:
@@ -103,7 +112,7 @@ class FinancialProfile(db.Model):
         score += (ef / 6) * 15
 
         # Cash flow direction
-        cf_map = {'Positive': 10, 'Neutral': 5, 'Negative': 0}
+        cf_map = {"Positive": 10, "Neutral": 5, "Negative": 0}
         score += cf_map.get(self.cash_flow_status, 5)
 
         # Savings goal
@@ -128,24 +137,24 @@ class FinancialProfile(db.Model):
     def to_dict(self):
         """Serialize for LLM context building."""
         return {
-            'monthly_income_pkr': self.monthly_income_pkr,
-            'income_type': self.income_type,
-            'credit_score': self.credit_score,
-            'debt_to_income_ratio': self.debt_to_income_ratio,
-            'savings_rate': self.savings_rate,
-            'financial_stress_level': self.financial_stress_level,
-            'cash_flow_status': self.cash_flow_status,
-            'financial_scenario': self.financial_scenario,
-            'emergency_fund_pkr': self.emergency_fund_pkr,
-            'emergency_fund_months': self.emergency_fund_months,
-            'loan_payment_pkr': self.loan_payment_pkr,
-            'investment_amount_pkr': self.investment_amount_pkr,
-            'subscription_services': self.subscription_services,
-            'savings_goal_met': self.savings_goal_met,
-            'financial_advice_score': self.financial_advice_score,
-            'has_custom_api_key': self.has_custom_api_key,
-            'preferred_model': self.preferred_model or 'llama-3.3-70b-versatile',
+            "monthly_income_pkr": self.monthly_income_pkr,
+            "income_type": self.income_type,
+            "credit_score": self.credit_score,
+            "debt_to_income_ratio": self.debt_to_income_ratio,
+            "savings_rate": self.savings_rate,
+            "financial_stress_level": self.financial_stress_level,
+            "cash_flow_status": self.cash_flow_status,
+            "financial_scenario": self.financial_scenario,
+            "emergency_fund_pkr": self.emergency_fund_pkr,
+            "emergency_fund_months": self.emergency_fund_months,
+            "loan_payment_pkr": self.loan_payment_pkr,
+            "investment_amount_pkr": self.investment_amount_pkr,
+            "subscription_services": self.subscription_services,
+            "savings_goal_met": self.savings_goal_met,
+            "financial_advice_score": self.financial_advice_score,
+            "has_custom_api_key": self.has_custom_api_key,
+            "preferred_model": self.preferred_model or "llama-3.3-70b-versatile",
         }
 
     def __repr__(self):
-        return f'<FinancialProfile user={self.user_id} score={self.financial_advice_score}>'
+        return f"<FinancialProfile user={self.user_id} score={self.financial_advice_score}>"

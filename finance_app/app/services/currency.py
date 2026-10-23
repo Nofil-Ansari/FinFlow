@@ -1,4 +1,5 @@
 """Exchange rate service using Open Exchange Rates API."""
+
 from datetime import datetime, timedelta
 import requests
 from flask import current_app
@@ -18,30 +19,32 @@ def fetch_exchange_rates():
     if latest and latest.fetched_at > datetime.utcnow() - timedelta(hours=1):
         return True  # Cache is fresh
 
-    app_id = current_app.config.get('OXR_APP_ID')
+    app_id = current_app.config.get("OXR_APP_ID")
     if not app_id:
         # If no key configured, check if we have any cached rates available
         return ExchangeRate.query.first() is not None
 
     try:
         session = get_http_session()
-        is_mocked = hasattr(requests.get, 'assert_called') or hasattr(requests.get, 'mock_calls')
+        is_mocked = hasattr(requests.get, "assert_called") or hasattr(
+            requests.get, "mock_calls"
+        )
         http_get = requests.get if is_mocked else session.get
 
         resp = http_get(
-            'https://openexchangerates.org/api/latest.json',
-            params={'app_id': app_id},
+            "https://openexchangerates.org/api/latest.json",
+            params={"app_id": app_id},
             timeout=DEFAULT_TIMEOUT,
         )
         resp.raise_for_status()
         data = resp.json()
 
-        rates = data.get('rates', {})
+        rates = data.get("rates", {})
         now = datetime.utcnow()
 
         for currency_code, rate in rates.items():
             existing = ExchangeRate.query.filter_by(
-                base_currency='USD', target_currency=currency_code
+                base_currency="USD", target_currency=currency_code
             ).first()
 
             if existing:
@@ -49,7 +52,7 @@ def fetch_exchange_rates():
                 existing.fetched_at = now
             else:
                 new_rate = ExchangeRate(
-                    base_currency='USD',
+                    base_currency="USD",
                     target_currency=currency_code,
                     rate=rate,
                     fetched_at=now,
@@ -61,10 +64,10 @@ def fetch_exchange_rates():
 
     except Exception as e:
         sanitized_err = sanitize_url(str(e))
-        current_app.logger.error(f'Failed to fetch exchange rates: {sanitized_err}')
+        current_app.logger.error(f"Failed to fetch exchange rates: {sanitized_err}")
         # Graceful fallback: return True if we have older cached rates to keep app working
         if ExchangeRate.query.first() is not None:
-            current_app.logger.warning('Fell back to existing cached exchange rates.')
+            current_app.logger.warning("Fell back to existing cached exchange rates.")
             return True
         return False
 
@@ -78,17 +81,17 @@ def convert(amount, from_currency, to_currency):
         return float(amount)
 
     from_rate = ExchangeRate.query.filter_by(
-        base_currency='USD', target_currency=from_currency
+        base_currency="USD", target_currency=from_currency
     ).first()
 
     to_rate = ExchangeRate.query.filter_by(
-        base_currency='USD', target_currency=to_currency
+        base_currency="USD", target_currency=to_currency
     ).first()
 
     if not from_rate or not to_rate:
         raise ValueError(
-            f'Exchange rate not available for {from_currency}/{to_currency}. '
-            'Please refresh rates.'
+            f"Exchange rate not available for {from_currency}/{to_currency}. "
+            "Please refresh rates."
         )
 
     # Convert: amount in from_currency → USD → to_currency
@@ -109,10 +112,10 @@ def get_rate(from_currency, to_currency):
         return 1.0
 
     from_rate = ExchangeRate.query.filter_by(
-        base_currency='USD', target_currency=from_currency
+        base_currency="USD", target_currency=from_currency
     ).first()
     to_rate = ExchangeRate.query.filter_by(
-        base_currency='USD', target_currency=to_currency
+        base_currency="USD", target_currency=to_currency
     ).first()
 
     if not from_rate or not to_rate:

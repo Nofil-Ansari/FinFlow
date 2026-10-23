@@ -74,7 +74,9 @@ class GroqMiddleware:
     """Middleware managing Groq LLM authentication, validation, model linkage, and completion."""
 
     @classmethod
-    def resolve_api_key(cls, user_id: Optional[int] = None) -> Tuple[Optional[str], str]:
+    def resolve_api_key(
+        cls, user_id: Optional[int] = None
+    ) -> Tuple[Optional[str], str]:
         """Resolve the active Groq API key for a user.
 
         Priority:
@@ -89,25 +91,27 @@ class GroqMiddleware:
         if user_id:
             profile = FinancialProfile.query.filter_by(user_id=user_id).first()
             if profile and profile.groq_api_key and profile.groq_api_key.strip():
-                return profile.groq_api_key.strip(), 'user'
+                return profile.groq_api_key.strip(), "user"
 
         # Check Flask app config first
-        if has_app_context() and current_app.config.get('GROQ_API_KEY'):
-            cfg_key = str(current_app.config.get('GROQ_API_KEY')).strip()
+        if has_app_context() and current_app.config.get("GROQ_API_KEY"):
+            cfg_key = str(current_app.config.get("GROQ_API_KEY")).strip()
             if cfg_key:
-                return cfg_key, 'env'
+                return cfg_key, "env"
 
         # Fallback to direct environment variable
-        env_key = os.environ.get('GROQ_API_KEY', '').strip()
+        env_key = os.environ.get("GROQ_API_KEY", "").strip()
         if env_key:
-            return env_key, 'env'
+            return env_key, "env"
 
-        return None, 'none'
+        return None, "none"
 
     @classmethod
-    def resolve_model(cls, user_id: Optional[int] = None, override_model: Optional[str] = None) -> str:
+    def resolve_model(
+        cls, user_id: Optional[int] = None, override_model: Optional[str] = None
+    ) -> str:
         """Resolve the active model for LLM inference."""
-        if override_model and any(m['id'] == override_model for m in SUPPORTED_MODELS):
+        if override_model and any(m["id"] == override_model for m in SUPPORTED_MODELS):
             return override_model
 
         if user_id:
@@ -128,19 +132,21 @@ class GroqMiddleware:
                 'error': Optional[str]
                 'models': List[str]
         """
-        clean_key = (api_key or '').strip()
+        clean_key = (api_key or "").strip()
         if not clean_key:
             return {
-                'success': False,
-                'latency_ms': 0,
-                'error': 'API key is required. Please paste your Groq API key.',
-                'models': [],
+                "success": False,
+                "latency_ms": 0,
+                "error": "API key is required. Please paste your Groq API key.",
+                "models": [],
             }
 
         start_time = time.time()
         try:
             session = get_http_session()
-            is_mocked = hasattr(requests.get, 'assert_called') or hasattr(requests.get, 'mock_calls')
+            is_mocked = hasattr(requests.get, "assert_called") or hasattr(
+                requests.get, "mock_calls"
+            )
             http_get = requests.get if is_mocked else session.get
 
             resp = http_get(
@@ -155,52 +161,52 @@ class GroqMiddleware:
 
             if resp.status_code == 200:
                 data = resp.json()
-                models = [m.get('id') for m in data.get('data', [])]
+                models = [m.get("id") for m in data.get("data", [])]
                 return {
-                    'success': True,
-                    'latency_ms': latency_ms,
-                    'error': None,
-                    'models': models,
+                    "success": True,
+                    "latency_ms": latency_ms,
+                    "error": None,
+                    "models": models,
                 }
             elif resp.status_code == 401:
                 return {
-                    'success': False,
-                    'latency_ms': latency_ms,
-                    'error': 'Invalid Groq API key. Please check the key at console.groq.com.',
-                    'models': [],
+                    "success": False,
+                    "latency_ms": latency_ms,
+                    "error": "Invalid Groq API key. Please check the key at console.groq.com.",
+                    "models": [],
                 }
             elif resp.status_code == 429:
                 retry_sec = parse_retry_after(resp)
                 wait_note = f" (retry in {retry_sec}s)" if retry_sec else ""
                 return {
-                    'success': False,
-                    'latency_ms': latency_ms,
-                    'error': f'Groq rate limit reached. Please wait a moment{wait_note}.',
-                    'models': [],
+                    "success": False,
+                    "latency_ms": latency_ms,
+                    "error": f"Groq rate limit reached. Please wait a moment{wait_note}.",
+                    "models": [],
                 }
             else:
                 return {
-                    'success': False,
-                    'latency_ms': latency_ms,
-                    'error': f'Groq API error ({resp.status_code}): {resp.text[:120]}',
-                    'models': [],
+                    "success": False,
+                    "latency_ms": latency_ms,
+                    "error": f"Groq API error ({resp.status_code}): {resp.text[:120]}",
+                    "models": [],
                 }
 
         except requests.exceptions.Timeout:
             return {
-                'success': False,
-                'latency_ms': 0,
-                'error': 'Connection timed out while contacting Groq servers.',
-                'models': [],
+                "success": False,
+                "latency_ms": 0,
+                "error": "Connection timed out while contacting Groq servers.",
+                "models": [],
             }
         except requests.exceptions.RequestException as e:
             sanitized_err = sanitize_url(str(e))
             logger.warning(f"Groq test_connection failed: {sanitized_err}")
             return {
-                'success': False,
-                'latency_ms': 0,
-                'error': f'Network error connecting to Groq: {sanitized_err}',
-                'models': [],
+                "success": False,
+                "latency_ms": 0,
+                "error": f"Network error connecting to Groq: {sanitized_err}",
+                "models": [],
             }
 
     @classmethod
@@ -214,21 +220,23 @@ class GroqMiddleware:
         masked_key = ""
         if profile and profile.has_custom_api_key:
             masked_key = profile.masked_api_key
-        elif source == 'env':
+        elif source == "env":
             masked_key = "•••••••• (Environment Key)"
 
         return {
-            'has_api_key': has_key,
-            'source': source,  # 'user', 'env', or 'none'
-            'masked_key': masked_key,
-            'preferred_model': preferred_model,
-            'supported_models': SUPPORTED_MODELS,
+            "has_api_key": has_key,
+            "source": source,  # 'user', 'env', or 'none'
+            "masked_key": masked_key,
+            "preferred_model": preferred_model,
+            "supported_models": SUPPORTED_MODELS,
         }
 
     @classmethod
-    def save_user_api_key(cls, user_id: int, api_key: str, preferred_model: Optional[str] = None) -> Dict:
+    def save_user_api_key(
+        cls, user_id: int, api_key: str, preferred_model: Optional[str] = None
+    ) -> Dict:
         """Persist a custom Groq API key and preferred model for the user."""
-        clean_key = (api_key or '').strip()
+        clean_key = (api_key or "").strip()
         profile = FinancialProfile.query.filter_by(user_id=user_id).first()
         if not profile:
             profile = FinancialProfile(user_id=user_id)
@@ -236,14 +244,16 @@ class GroqMiddleware:
             db.session.add(profile)
 
         profile.groq_api_key = clean_key
-        if preferred_model and any(m['id'] == preferred_model for m in SUPPORTED_MODELS):
+        if preferred_model and any(
+            m["id"] == preferred_model for m in SUPPORTED_MODELS
+        ):
             profile.preferred_model = preferred_model
 
         db.session.commit()
         return {
-            'status': 'ok',
-            'masked_key': profile.masked_api_key,
-            'preferred_model': profile.preferred_model,
+            "status": "ok",
+            "masked_key": profile.masked_api_key,
+            "preferred_model": profile.preferred_model,
         }
 
     @classmethod
@@ -256,15 +266,17 @@ class GroqMiddleware:
 
         api_key, source = cls.resolve_api_key(user_id)
         return {
-            'status': 'ok',
-            'has_fallback': bool(api_key),
-            'source': source,
+            "status": "ok",
+            "has_fallback": bool(api_key),
+            "source": source,
         }
 
     # ── Chat Lifecycle & Model Pipeline ───────────────────────────────────────
 
     @classmethod
-    def chat(cls, user_id: int, user_message: str, model_override: Optional[str] = None) -> Dict:
+    def chat(
+        cls, user_id: int, user_message: str, model_override: Optional[str] = None
+    ) -> Dict:
         """Execute chat request by linking user models and dispatching to Groq API.
 
         Workflow:
@@ -276,7 +288,7 @@ class GroqMiddleware:
           5. Call Groq API and persist assistant response & tokens to AiChatMessage.
         """
         # 1. Record incoming user message
-        cls._save_message(user_id, 'user', user_message)
+        cls._save_message(user_id, "user", user_message)
 
         # 2. Resolve credentials
         api_key, source = cls.resolve_api_key(user_id)
@@ -285,13 +297,13 @@ class GroqMiddleware:
         # 3. Handle offline/no-key mode
         if not api_key:
             fallback = cls._fallback_response(user_message)
-            cls._save_message(user_id, 'assistant', fallback, tokens=0)
+            cls._save_message(user_id, "assistant", fallback, tokens=0)
             return {
-                'response': fallback,
-                'tokens_used': 0,
-                'is_fallback': True,
-                'model_used': 'Offline Fallback',
-                'source': 'none',
+                "response": fallback,
+                "tokens_used": 0,
+                "is_fallback": True,
+                "model_used": "Offline Fallback",
+                "source": "none",
             }
 
         # 4. Link models: inject system prompt & recent conversation
@@ -305,7 +317,9 @@ class GroqMiddleware:
         # 5. Invoke Groq API
         try:
             session = get_http_session()
-            is_mocked = hasattr(requests.post, 'assert_called') or hasattr(requests.post, 'mock_calls')
+            is_mocked = hasattr(requests.post, "assert_called") or hasattr(
+                requests.post, "mock_calls"
+            )
             http_post = requests.post if is_mocked else session.post
 
             resp = http_post(
@@ -329,13 +343,13 @@ class GroqMiddleware:
                     "⚠️ The configured Groq API key is invalid or expired. "
                     "Please update your key using the 'Groq API Key' button above."
                 )
-                cls._save_message(user_id, 'assistant', error_msg)
+                cls._save_message(user_id, "assistant", error_msg)
                 return {
-                    'response': error_msg,
-                    'tokens_used': 0,
-                    'is_fallback': True,
-                    'model_used': target_model,
-                    'source': source,
+                    "response": error_msg,
+                    "tokens_used": 0,
+                    "is_fallback": True,
+                    "model_used": target_model,
+                    "source": source,
                 }
 
             if resp.status_code == 429:
@@ -350,60 +364,61 @@ class GroqMiddleware:
                         "⏳ Groq rate limit reached. Please wait a moment before sending another message. "
                         "Free-tier accounts provide ~30 requests/minute."
                     )
-                cls._save_message(user_id, 'assistant', limit_msg)
+                cls._save_message(user_id, "assistant", limit_msg)
                 return {
-                    'response': limit_msg,
-                    'tokens_used': 0,
-                    'is_fallback': True,
-                    'model_used': target_model,
-                    'source': source,
+                    "response": limit_msg,
+                    "tokens_used": 0,
+                    "is_fallback": True,
+                    "model_used": target_model,
+                    "source": source,
                 }
 
             resp.raise_for_status()
             data = resp.json()
 
-            assistant_content = data['choices'][0]['message']['content']
-            tokens = data.get('usage', {}).get('total_tokens', 0)
+            assistant_content = data["choices"][0]["message"]["content"]
+            tokens = data.get("usage", {}).get("total_tokens", 0)
 
             # Persist assistant reply with telemetry
-            cls._save_message(user_id, 'assistant', assistant_content, tokens=tokens)
+            cls._save_message(user_id, "assistant", assistant_content, tokens=tokens)
             return {
-                'response': assistant_content,
-                'tokens_used': tokens,
-                'is_fallback': False,
-                'model_used': target_model,
-                'source': source,
+                "response": assistant_content,
+                "tokens_used": tokens,
+                "is_fallback": False,
+                "model_used": target_model,
+                "source": source,
             }
 
         except requests.exceptions.Timeout:
-            timeout_msg = "⏱️ The AI advisor timed out while processing. Please try asking again."
-            cls._save_message(user_id, 'assistant', timeout_msg)
+            timeout_msg = (
+                "⏱️ The AI advisor timed out while processing. Please try asking again."
+            )
+            cls._save_message(user_id, "assistant", timeout_msg)
             return {
-                'response': timeout_msg,
-                'tokens_used': 0,
-                'is_fallback': True,
-                'model_used': target_model,
-                'source': source,
+                "response": timeout_msg,
+                "tokens_used": 0,
+                "is_fallback": True,
+                "model_used": target_model,
+                "source": source,
             }
         except requests.exceptions.RequestException as e:
             sanitized_err = sanitize_url(str(e))
             logger.error(f"Groq API call error for user {user_id}: {sanitized_err}")
             fallback = cls._fallback_response(user_message)
-            cls._save_message(user_id, 'assistant', fallback)
+            cls._save_message(user_id, "assistant", fallback)
             return {
-                'response': fallback,
-                'tokens_used': 0,
-                'is_fallback': True,
-                'model_used': target_model,
-                'source': source,
+                "response": fallback,
+                "tokens_used": 0,
+                "is_fallback": True,
+                "model_used": target_model,
+                "source": source,
             }
 
     @classmethod
     def _get_chat_history(cls, user_id: int) -> List[Dict[str, str]]:
         """Retrieve recent chronological chat history from AiChatMessage model."""
         messages = (
-            AiChatMessage.query
-            .filter_by(user_id=user_id)
+            AiChatMessage.query.filter_by(user_id=user_id)
             .order_by(AiChatMessage.created_at.desc())
             .limit(MAX_HISTORY_MESSAGES)
             .all()
@@ -434,7 +449,7 @@ class GroqMiddleware:
         """Contextual Pakistani financial rule-based advice when Groq API key is not set."""
         message_lower = user_message.lower()
 
-        if any(w in message_lower for w in ['save', 'saving', 'savings', 'bachat']):
+        if any(w in message_lower for w in ["save", "saving", "savings", "bachat"]):
             return (
                 "💡 **Smart Savings Tips (Pakistan):**\n\n"
                 "• **Payday Standing Transfer**: Automatically divert at least PKR 5,000–10,000 to a separate savings account.\n"
@@ -443,7 +458,10 @@ class GroqMiddleware:
                 "• **Bulk & Batch Prep**: Cooking at home saves 60–70% compared to food delivery apps.\n\n"
                 "🔑 *Click 'Groq API Key' at the top to connect your free Groq key for personalized real-time AI reasoning!*"
             )
-        elif any(w in message_lower for w in ['budget', 'spend', 'spending', 'expensive', 'kharch']):
+        elif any(
+            w in message_lower
+            for w in ["budget", "spend", "spending", "expensive", "kharch"]
+        ):
             return (
                 "💡 **Budget & Cost Optimization Tips:**\n\n"
                 "• **InDrive vs Uber/Careem**: Save 25–35% on daily commutes by negotiating ride fares.\n"
@@ -452,7 +470,10 @@ class GroqMiddleware:
                 "• **Subscription Audit**: Review streaming services (Netflix, Spotify) and switch to family sharing.\n\n"
                 "🔑 *Add your free Groq API key in the top bar to analyze your personal spending patterns.*"
             )
-        elif any(w in message_lower for w in ['invest', 'investment', 'return', 'profit', 'munafa']):
+        elif any(
+            w in message_lower
+            for w in ["invest", "investment", "return", "profit", "munafa"]
+        ):
             return (
                 "💡 **Key Investment Avenues in Pakistan:**\n\n"
                 "• **National Savings (Behbood / Regular Income)**: 15–21% p.a., backed by the Government of Pakistan.\n"
@@ -464,9 +485,9 @@ class GroqMiddleware:
             return (
                 "👋 I'm your **AI Financial Advisor** tailored for Pakistan!\n\n"
                 "Here are some questions you can ask me:\n"
-                "• *\"How can I save PKR 15,000 this month?\"*\n"
-                "• *\"What are cheaper alternatives to Careem and KFC?\"*\n"
-                "• *\"How do I build an emergency fund on a PKR 90,000 salary?\"*\n"
-                "• *\"Are mutual funds or NSCs better for my risk profile?\"*\n\n"
+                '• *"How can I save PKR 15,000 this month?"*\n'
+                '• *"What are cheaper alternatives to Careem and KFC?"*\n'
+                '• *"How do I build an emergency fund on a PKR 90,000 salary?"*\n'
+                '• *"Are mutual funds or NSCs better for my risk profile?"*\n\n'
                 "🔑 **Pro-Tip**: Click the **'🔑 Groq API Key'** button at the top of this page to connect a free Groq key for full conversational power!"
             )
