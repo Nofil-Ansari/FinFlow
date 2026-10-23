@@ -1,21 +1,22 @@
 # STATE.md - Project Memory
 
 ## Active Milestone
-**Milestone**: None (v1.0 Archived)
-**Active Branch**: LLM_pilot_branch
-**Last Updated**: 2026-10-19
+**Milestone**: v2.0 - Production Deployment & Continuous Delivery (AWS EC2 + Supabase)
+**Active Branch**: main
+**Last Updated**: 2026-10-24
 
 ## Current Position
-- **Status**: Milestone v1.0 Completed & Archived
-- **Phases**: All 4 phases complete
-- **Archive Location**: `.gsd/milestones/v1.0/`
+- **Milestone**: v2.0
+- **Phase**: Not started (Ready for Phase 1: AWS Environment & Agent Toolkit Provisioning)
+- **Status**: Milestone planned
 
-## Last Session Summary
-Milestone v1.0 successfully archived:
-1. Ran full test suite (43/43 tests passing).
-2. Audited deliverables and saved audit report (`.gsd/milestones/v1.0-AUDIT.md`).
-3. Archived Phase 1-4 plans, summaries, and verification reports to `.gsd/milestones/v1.0/`.
-4. Archived and reset DECISIONS.md, JOURNAL.md, and ROADMAP.md.
+## Key Requirements & Inputs (from Prompts)
+- **Target Host**: AWS EC2
+- **AWS Region**: ap-southeast-2 (Sydney)
+- **AWS Experience**: The new AWS experience (Project-based)
+- **Database Strategy**: Hosted PostgreSQL (Supabase)
+- **Deployment Trigger**: Automated GitHub Actions CD pipeline upon passing CI on main
+- **Toolkit Integration**: AWS Agent Toolkit via setup-instructions/setup.md
 
 ## Next Steps
-1. Run `/new-milestone` to initiate the next milestone cycle (e.g., v1.1 or v2.0 with Google OAuth, SMS/WhatsApp alerts, UI polish).
+1. Run \/plan 1\ or start Phase 1: Install uv & AWS CLI, configure project profile, and authenticate via browser.
