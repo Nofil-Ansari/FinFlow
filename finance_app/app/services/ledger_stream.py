@@ -5,6 +5,7 @@ transaction lifecycle events (create, update, delete) to connected clients.
 Designed for integration with Excel Power Query, Google Sheets, and BigQuery
 streaming ingest pipelines.
 """
+
 import json
 import logging
 from datetime import datetime
@@ -25,30 +26,33 @@ class LedgerNamespace(Namespace):
         or an auth_token query parameter matching the user's session.
         """
         if not current_user.is_authenticated:
-            logger.warning('Unauthenticated WebSocket connection attempt')
+            logger.warning("Unauthenticated WebSocket connection attempt")
             disconnect()
             return False
 
-        user_room = f'user_{current_user.user_id}'
+        user_room = f"user_{current_user.user_id}"
         join_room(user_room)
-        logger.info(f'WebSocket connected: user {current_user.user_id}')
-        emit('ledger_status', {
-            'status': 'connected',
-            'user_id': current_user.user_id,
-            'timestamp': datetime.utcnow().isoformat(),
-            'message': 'Live ledger sync active'
-        })
+        logger.info(f"WebSocket connected: user {current_user.user_id}")
+        emit(
+            "ledger_status",
+            {
+                "status": "connected",
+                "user_id": current_user.user_id,
+                "timestamp": datetime.utcnow().isoformat(),
+                "message": "Live ledger sync active",
+            },
+        )
 
     def on_disconnect(self):
         """Handle client disconnection."""
         if current_user.is_authenticated:
-            user_room = f'user_{current_user.user_id}'
+            user_room = f"user_{current_user.user_id}"
             leave_room(user_room)
-            logger.info(f'WebSocket disconnected: user {current_user.user_id}')
+            logger.info(f"WebSocket disconnected: user {current_user.user_id}")
 
     def on_ping(self, data=None):
         """Respond to client ping for connection health checks."""
-        emit('pong', {'timestamp': datetime.utcnow().isoformat()})
+        emit("pong", {"timestamp": datetime.utcnow().isoformat()})
 
 
 def broadcast_ledger_event(user_id, event_type, transaction_data):
@@ -65,19 +69,19 @@ def broadcast_ledger_event(user_id, event_type, transaction_data):
     from ..extensions import socketio
 
     payload = {
-        'event': event_type,
-        'timestamp': datetime.utcnow().isoformat(),
-        'data': transaction_data,
+        "event": event_type,
+        "timestamp": datetime.utcnow().isoformat(),
+        "data": transaction_data,
     }
 
-    user_room = f'user_{user_id}'
+    user_room = f"user_{user_id}"
     socketio.emit(
-        'ledger_event',
+        "ledger_event",
         payload,
-        namespace='/ws/ledger',
+        namespace="/ws/ledger",
         room=user_room,
     )
-    logger.info(f'Broadcast {event_type} to user {user_id}')
+    logger.info(f"Broadcast {event_type} to user {user_id}")
 
 
 def build_transaction_snapshot(txn):
@@ -87,16 +91,16 @@ def build_transaction_snapshot(txn):
     needed by external analytics tools.
     """
     return {
-        'transaction_id': txn.transaction_id,
-        'date': txn.transaction_date.isoformat() if txn.transaction_date else None,
-        'description': txn.description or '',
-        'category': txn.category.name if txn.category else 'Uncategorized',
-        'category_icon': txn.category.icon if txn.category else '',
-        'account': txn.account.account_name if txn.account else '',
-        'type': txn.transaction_type,
-        'amount': float(txn.amount),
-        'currency': txn.currency or 'PKR',
-        'exchange_rate': float(txn.exchange_rate or 1),
-        'amount_base': txn.amount_in_base,
-        'is_deleted': txn.is_deleted,
+        "transaction_id": txn.transaction_id,
+        "date": txn.transaction_date.isoformat() if txn.transaction_date else None,
+        "description": txn.description or "",
+        "category": txn.category.name if txn.category else "Uncategorized",
+        "category_icon": txn.category.icon if txn.category else "",
+        "account": txn.account.account_name if txn.account else "",
+        "type": txn.transaction_type,
+        "amount": float(txn.amount),
+        "currency": txn.currency or "PKR",
+        "exchange_rate": float(txn.exchange_rate or 1),
+        "amount_base": txn.amount_in_base,
+        "is_deleted": txn.is_deleted,
     }

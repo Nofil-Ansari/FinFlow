@@ -7,7 +7,7 @@ from .extensions import db, migrate, login_manager, csrf, mail, oauth, socketio
 def create_app(config_name=None):
     """Application factory."""
     if config_name is None:
-        config_name = os.getenv('FLASK_ENV', 'development')
+        config_name = os.getenv("FLASK_ENV", "development")
 
     app = Flask(__name__)
     app.config.from_object(config_map[config_name])
@@ -22,17 +22,17 @@ def create_app(config_name=None):
     socketio.init_app(app)
 
     # Register Google OAuth
-    if app.config.get('GOOGLE_CLIENT_ID'):
+    if app.config.get("GOOGLE_CLIENT_ID"):
         oauth.register(
-            name='google',
-            client_id=app.config['GOOGLE_CLIENT_ID'],
-            client_secret=app.config['GOOGLE_CLIENT_SECRET'],
-            server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
-            client_kwargs={'scope': 'openid email profile'},
+            name="google",
+            client_id=app.config["GOOGLE_CLIENT_ID"],
+            client_secret=app.config["GOOGLE_CLIENT_SECRET"],
+            server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+            client_kwargs={"scope": "openid email profile"},
         )
 
     # Ensure upload directory exists
-    os.makedirs(app.config.get('UPLOAD_FOLDER', 'uploads'), exist_ok=True)
+    os.makedirs(app.config.get("UPLOAD_FOLDER", "uploads"), exist_ok=True)
 
     # Register blueprints
     _register_blueprints(app)
@@ -41,8 +41,8 @@ def create_app(config_name=None):
     _register_user_loader()
 
     # Configure Flask-Login
-    login_manager.login_view = 'auth.login'
-    login_manager.login_message_category = 'info'
+    login_manager.login_view = "auth.login"
+    login_manager.login_message_category = "info"
 
     # Register template context processors
     _register_context_processors(app)
@@ -51,13 +51,14 @@ def create_app(config_name=None):
     _register_websocket_namespaces()
 
     # Root route redirect
-    @app.route('/')
+    @app.route("/")
     def index():
         from flask_login import current_user
         from flask import redirect, url_for
+
         if current_user.is_authenticated:
-            return redirect(url_for('dashboard.index'))
-        return redirect(url_for('auth.login'))
+            return redirect(url_for("dashboard.index"))
+        return redirect(url_for("auth.login"))
 
     return app
 
@@ -89,7 +90,7 @@ def _register_blueprints(app):
     app.register_blueprint(tags_bp)
     app.register_blueprint(imports_bp)
     app.register_blueprint(reports_bp)
-    app.register_blueprint(api_bp, url_prefix='/api/v1')
+    app.register_blueprint(api_bp, url_prefix="/api/v1")
     app.register_blueprint(ai_bp)
 
 
@@ -105,13 +106,15 @@ def _register_user_loader():
 def _register_websocket_namespaces():
     """Register WebSocket namespaces for real-time streaming."""
     from .services.ledger_stream import LedgerNamespace
-    socketio.on_namespace(LedgerNamespace('/ws/ledger'))
+
+    socketio.on_namespace(LedgerNamespace("/ws/ledger"))
 
 
 def _register_context_processors(app):
     """Global template context variables."""
+
     @app.context_processor
     def inject_globals():
         return {
-            'app_name': 'FinanceFlow',
+            "app_name": "FinanceFlow",
         }

@@ -12,8 +12,8 @@ login_manager = LoginManager()
 csrf = CSRFProtect()
 mail = Mail()
 oauth = OAuth()
-socketio = SocketIO(cors_allowed_origins='*', async_mode='threading')
+socketio = SocketIO(cors_allowed_origins="*", async_mode="threading")
 
-login_manager.login_view = 'auth.login'
-login_manager.login_message = 'Please log in to access this page.'
-login_manager.login_message_category = 'info'
+login_manager.login_view = "auth.login"
+login_manager.login_message = "Please log in to access this page."
+login_manager.login_message_category = "info"

@@ -1,4 +1,5 @@
 """CSV parsing and data cleaning logic for bank statement imports."""
+
 import csv
 import io
 from datetime import datetime
@@ -7,9 +8,9 @@ from datetime import datetime
 def parse_csv(file_content):
     """Parse CSV content and return headers and rows."""
     try:
-        text = file_content.decode('utf-8')
+        text = file_content.decode("utf-8")
     except UnicodeDecodeError:
-        text = file_content.decode('latin-1')
+        text = file_content.decode("latin-1")
 
     reader = csv.reader(io.StringIO(text))
     rows = list(reader)
@@ -42,54 +43,54 @@ def clean_data(rows, column_mapping):
             record = {}
 
             # Date
-            date_idx = column_mapping.get('date')
+            date_idx = column_mapping.get("date")
             if date_idx is not None and date_idx < len(row):
                 raw_date = row[date_idx].strip()
-                record['date'] = _parse_date(raw_date)
+                record["date"] = _parse_date(raw_date)
             else:
-                errors.append(f'Row {i}: Missing date')
+                errors.append(f"Row {i}: Missing date")
                 continue
 
             # Amount
-            amount_idx = column_mapping.get('amount')
+            amount_idx = column_mapping.get("amount")
             if amount_idx is not None and amount_idx < len(row):
-                raw_amount = row[amount_idx].strip().replace(',', '').replace('-', '')
+                raw_amount = row[amount_idx].strip().replace(",", "").replace("-", "")
                 if not raw_amount:
-                    errors.append(f'Row {i}: Empty amount')
+                    errors.append(f"Row {i}: Empty amount")
                     continue
-                record['amount'] = abs(float(raw_amount))
+                record["amount"] = abs(float(raw_amount))
             else:
-                errors.append(f'Row {i}: Missing amount')
+                errors.append(f"Row {i}: Missing amount")
                 continue
 
             # Type
-            type_idx = column_mapping.get('type')
+            type_idx = column_mapping.get("type")
             if type_idx is not None and type_idx < len(row):
                 raw_type = row[type_idx].strip().lower()
-                if raw_type in ('income', 'credit', 'cr', 'deposit'):
-                    record['type'] = 'income'
+                if raw_type in ("income", "credit", "cr", "deposit"):
+                    record["type"] = "income"
                 else:
-                    record['type'] = 'expense'
+                    record["type"] = "expense"
             else:
-                record['type'] = 'expense'  # Default to expense
+                record["type"] = "expense"  # Default to expense
 
             # Description
-            desc_idx = column_mapping.get('description')
+            desc_idx = column_mapping.get("description")
             if desc_idx is not None and desc_idx < len(row):
-                record['description'] = row[desc_idx].strip()
+                record["description"] = row[desc_idx].strip()
             else:
-                record['description'] = ''
+                record["description"] = ""
 
             cleaned.append(record)
 
         except (ValueError, IndexError) as e:
-            errors.append(f'Row {i}: {str(e)}')
+            errors.append(f"Row {i}: {str(e)}")
 
     # Remove duplicates (same date + amount + description)
     seen = set()
     unique = []
     for record in cleaned:
-        key = (str(record['date']), str(record['amount']), record['description'])
+        key = (str(record["date"]), str(record["amount"]), record["description"])
         if key not in seen:
             seen.add(key)
             unique.append(record)
@@ -99,10 +100,10 @@ def clean_data(rows, column_mapping):
 
 def _parse_date(date_str):
     """Try multiple date formats."""
-    formats = ['%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y', '%d-%m-%Y', '%Y/%m/%d']
+    formats = ["%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d-%m-%Y", "%Y/%m/%d"]
     for fmt in formats:
         try:
             return datetime.strptime(date_str, fmt).date()
         except ValueError:
             continue
-    raise ValueError(f'Cannot parse date: {date_str}')
+    raise ValueError(f"Cannot parse date: {date_str}")

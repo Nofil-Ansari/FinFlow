@@ -14,40 +14,38 @@ from ..services.audit import log_action
 from ..services.ledger_stream import broadcast_ledger_event, build_transaction_snapshot
 
 
-@transactions_bp.route('/')
+@transactions_bp.route("/")
 @login_required
 def index():
-    page = request.args.get('page', 1, type=int)
+    page = request.args.get("page", 1, type=int)
     per_page = 20
 
-    query = Transaction.query.filter_by(
-        user_id=current_user.user_id, is_deleted=False
-    )
+    query = Transaction.query.filter_by(user_id=current_user.user_id, is_deleted=False)
 
     # Filters
-    txn_type = request.args.get('type')
-    if txn_type in ('income', 'expense'):
+    txn_type = request.args.get("type")
+    if txn_type in ("income", "expense"):
         query = query.filter_by(transaction_type=txn_type)
 
-    category_id = request.args.get('category_id', type=int)
+    category_id = request.args.get("category_id", type=int)
     if category_id:
         query = query.filter_by(category_id=category_id)
 
-    account_id = request.args.get('account_id', type=int)
+    account_id = request.args.get("account_id", type=int)
     if account_id:
         query = query.filter_by(account_id=account_id)
 
-    date_from = request.args.get('date_from')
+    date_from = request.args.get("date_from")
     if date_from:
         query = query.filter(Transaction.transaction_date >= date_from)
 
-    date_to = request.args.get('date_to')
+    date_to = request.args.get("date_to")
     if date_to:
         query = query.filter(Transaction.transaction_date <= date_to)
 
-    search = request.args.get('search', '').strip()
+    search = request.args.get("search", "").strip()
     if search:
-        query = query.filter(Transaction.description.ilike(f'%{search}%'))
+        query = query.filter(Transaction.description.ilike(f"%{search}%"))
 
     pagination = query.order_by(Transaction.transaction_date.desc()).paginate(
         page=page, per_page=per_page, error_out=False
@@ -60,14 +58,16 @@ def index():
         user_id=current_user.user_id, is_deleted=False
     ).all()
 
-    return render_template('transactions/list.html',
-                           transactions=pagination.items,
-                           pagination=pagination,
-                           categories=categories,
-                           accounts=accounts)
+    return render_template(
+        "transactions/list.html",
+        transactions=pagination.items,
+        pagination=pagination,
+        categories=categories,
+        accounts=accounts,
+    )
 
 
-@transactions_bp.route('/add', methods=['GET', 'POST'])
+@transactions_bp.route("/add", methods=["GET", "POST"])
 @login_required
 def add():
     form = TransactionForm()
@@ -91,27 +91,36 @@ def add():
             tt = TransactionTag(transaction_id=txn.transaction_id, tag_id=tag_id)
             db.session.add(tt)
 
-        log_action('transactions', 'create', txn.transaction_id, current_user.user_id,
-                   note=f'{txn.transaction_type} of {txn.amount}')
+        log_action(
+            "transactions",
+            "create",
+            txn.transaction_id,
+            current_user.user_id,
+            note=f"{txn.transaction_type} of {txn.amount}",
+        )
 
         db.session.commit()
 
         # Check budget alerts for expense transactions
-        if txn.transaction_type == 'expense' and txn.category_id:
+        if txn.transaction_type == "expense" and txn.category_id:
             check_and_alert(current_user.user_id, txn.category_id)
 
         try:
-            broadcast_ledger_event(current_user.user_id, 'transaction_created', build_transaction_snapshot(txn))
+            broadcast_ledger_event(
+                current_user.user_id,
+                "transaction_created",
+                build_transaction_snapshot(txn),
+            )
         except Exception:
             pass
-        flash('Transaction added!', 'success')
-        return redirect(url_for('transactions.index'))
+        flash("Transaction added!", "success")
+        return redirect(url_for("transactions.index"))
 
     form.transaction_date.data = form.transaction_date.data or date.today()
-    return render_template('transactions/form.html', form=form, title='Add Transaction')
+    return render_template("transactions/form.html", form=form, title="Add Transaction")
 
 
-@transactions_bp.route('/edit/<int:txn_id>', methods=['GET', 'POST'])
+@transactions_bp.route("/edit/<int:txn_id>", methods=["GET", "POST"])
 @login_required
 def edit(txn_id):
     txn = Transaction.query.filter_by(
@@ -123,9 +132,9 @@ def edit(txn_id):
 
     if form.validate_on_submit():
         old_values = {
-            'amount': str(txn.amount),
-            'type': txn.transaction_type,
-            'category_id': txn.category_id,
+            "amount": str(txn.amount),
+            "type": txn.transaction_type,
+            "category_id": txn.category_id,
         }
 
         txn.account_id = form.account_id.data
@@ -142,30 +151,47 @@ def edit(txn_id):
             db.session.add(tt)
 
         new_values = {
-            'amount': str(txn.amount),
-            'type': txn.transaction_type,
-            'category_id': txn.category_id,
+            "amount": str(txn.amount),
+            "type": txn.transaction_type,
+            "category_id": txn.category_id,
         }
 
-        log_action('transactions', 'update', txn.transaction_id, current_user.user_id,
-                   note='updated transaction', old_value=old_values, new_value=new_values)
+        log_action(
+            "transactions",
+            "update",
+            txn.transaction_id,
+            current_user.user_id,
+            note="updated transaction",
+            old_value=old_values,
+            new_value=new_values,
+        )
 
         db.session.commit()
         try:
-            broadcast_ledger_event(current_user.user_id, 'transaction_updated', build_transaction_snapshot(txn))
+            broadcast_ledger_event(
+                current_user.user_id,
+                "transaction_updated",
+                build_transaction_snapshot(txn),
+            )
         except Exception:
             pass
-        flash('Transaction updated!', 'success')
-        return redirect(url_for('transactions.index'))
+        flash("Transaction updated!", "success")
+        return redirect(url_for("transactions.index"))
 
     # Pre-select current tags
-    form.tag_ids.data = [tt.tag_id for tt in
-                          TransactionTag.query.filter_by(transaction_id=txn.transaction_id).all()]
+    form.tag_ids.data = [
+        tt.tag_id
+        for tt in TransactionTag.query.filter_by(
+            transaction_id=txn.transaction_id
+        ).all()
+    ]
 
-    return render_template('transactions/form.html', form=form, title='Edit Transaction')
+    return render_template(
+        "transactions/form.html", form=form, title="Edit Transaction"
+    )
 
 
-@transactions_bp.route('/delete/<int:txn_id>', methods=['POST'])
+@transactions_bp.route("/delete/<int:txn_id>", methods=["POST"])
 @login_required
 def delete(txn_id):
     txn = Transaction.query.filter_by(
@@ -173,26 +199,33 @@ def delete(txn_id):
     ).first_or_404()
 
     txn.soft_delete()
-    log_action('transactions', 'delete', txn.transaction_id, current_user.user_id,
-               note=f'soft deleted {txn.transaction_type} of {txn.amount}')
+    log_action(
+        "transactions",
+        "delete",
+        txn.transaction_id,
+        current_user.user_id,
+        note=f"soft deleted {txn.transaction_type} of {txn.amount}",
+    )
     db.session.commit()
 
     try:
-        broadcast_ledger_event(current_user.user_id, 'transaction_deleted', build_transaction_snapshot(txn))
+        broadcast_ledger_event(
+            current_user.user_id, "transaction_deleted", build_transaction_snapshot(txn)
+        )
     except Exception:
         pass
-    flash('Transaction deleted.', 'info')
-    return redirect(url_for('transactions.index'))
+    flash("Transaction deleted.", "info")
+    return redirect(url_for("transactions.index"))
 
 
-@transactions_bp.route('/transfer', methods=['GET', 'POST'])
+@transactions_bp.route("/transfer", methods=["GET", "POST"])
 @login_required
 def transfer():
     form = TransferForm()
     accounts = Account.query.filter_by(
         user_id=current_user.user_id, is_deleted=False, is_active=True
     ).all()
-    choices = [(a.account_id, f'{a.account_name} ({a.currency})') for a in accounts]
+    choices = [(a.account_id, f"{a.account_name} ({a.currency})") for a in accounts]
     form.from_account_id.choices = choices
     form.to_account_id.choices = choices
 
@@ -205,13 +238,14 @@ def transfer():
                 user_id=current_user.user_id,
                 notes=form.notes.data,
             )
-            flash('Transfer completed!', 'success')
-            return redirect(url_for('dashboard.index'))
+            flash("Transfer completed!", "success")
+            return redirect(url_for("dashboard.index"))
         except ValueError as e:
-            flash(str(e), 'danger')
+            flash(str(e), "danger")
 
-    return render_template('transactions/form.html', form=form, title='Fund Transfer',
-                           is_transfer=True)
+    return render_template(
+        "transactions/form.html", form=form, title="Fund Transfer", is_transfer=True
+    )
 
 
 def _populate_form_choices(form):
@@ -224,10 +258,11 @@ def _populate_form_choices(form):
     categories = Category.query.filter(
         db.or_(Category.user_id == current_user.user_id, Category.user_id.is_(None))
     ).all()
-    form.category_id.choices = [(c.category_id, f'{c.icon} {c.name}') for c in categories]
+    form.category_id.choices = [
+        (c.category_id, f"{c.icon} {c.name}") for c in categories
+    ]
 
     tags = Tag.query.filter(
         db.or_(Tag.user_id == current_user.user_id, Tag.user_id.is_(None))
     ).all()
     form.tag_ids.choices = [(t.tag_id, t.name) for t in tags]
-
