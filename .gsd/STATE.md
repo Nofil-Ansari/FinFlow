@@ -20,3 +20,9 @@
 
 ## Next Steps
 1. Run \/plan 1\ or start Phase 1: Install uv & AWS CLI, configure project profile, and authenticate via browser.
+
+
+## Gap Closure Mode
+Addressing 2 technical debt gap closure plans identified in Milestone v2.0 Audit:
+- **Plan 6.1 (fix-deprecations-and-teardown)**: Modernize UTC timestamps & SQLite connection cleanup.
+- **Plan 6.2 (fix-dependencies-and-lockfile)**: Audit vulnerable dependencies & pin production packages.

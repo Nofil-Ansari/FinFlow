@@ -31,3 +31,13 @@
 ### Phase 5: GitHub Actions Continuous Deployment (CD) Pipeline
 **Status**: ⬜ Not Started  
 **Objective**: Extend .github/workflows/ci.yml with an automated deployment job to build, push container images, deploy to EC2 with zero-downtime, and run automated post-deploy health checks.
+
+
+### Phase 6: Production Hardening & Technical Debt Resolution (Gap Closure)
+**Status**: ⬜ Not Started  
+**Objective**: Resolve technical debt items identified in the milestone audit: modernize deprecated timestamps, fix SQLite connection cleanup in test tearDown, and resolve Dependabot package vulnerability warnings.
+
+**Gaps to Close:**
+- [ ] Migrate datetime.utcnow() across models and services to datetime.now(timezone.utc).
+- [ ] Implement explicit engine/connection close in test harness tearDown (	est_ai_advisor.py).
+- [ ] Perform dependency vulnerability bump and generate container-pinned requirements lock.
