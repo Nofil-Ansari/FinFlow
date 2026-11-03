@@ -1,0 +1,11 @@
+{
+	"http.proxy": "http://127.0.0.1:51372",
+	"http.proxySupport": "override",
+	"http.proxyStrictSSL": false,
+	"http.noProxy": [
+		"localhost",
+		"127.0.0.1",
+		"::1",
+		"ai.virustotal.com"
+	]
+}
