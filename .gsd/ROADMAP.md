@@ -1,43 +1,51 @@
 # ROADMAP.md
 
-> **Current Milestone**: v2.0 - Production Deployment & Continuous Delivery (GCP Cloud Run + Supabase + Redis)
-> **Goal**: Establish a production-grade automated Continuous Deployment (CD) pipeline deploying FinanceFlow to Google Cloud Run with serverless container scaling, Upstash/GCP Memorystore Redis for caching & session/socket backplane, hosted PostgreSQL (Supabase) database, and live WebSocket support.
+> **Active Milestone**: v2.1 - Localized Financial RAG & Vector Intelligence Engine  
+> **Goal**: Build an end-to-end Retrieval-Augmented Generation (RAG) system for FinanceFlow to ground the AI financial advisor in Pakistani market financial rules (FBR tax slabs, SBP regulations, National Savings schemes, Zakat calculations, and verified local product substitutions) using vector embeddings and similarity search.
 
-## Must-Haves
-- [ ] Google Cloud SDK (gcloud CLI) environment configuration & project authorization with Cloud Run & Artifact Registry APIs enabled.
-- [ ] Production-ready Docker containerization for Flask + Gunicorn + eventlet/gevent worker architecture supporting WebSockets.
-- [ ] Redis caching & pub/sub integration (Flask-Caching / Redis message queue for Flask-SocketIO & caching frequently accessed financial analytics/substitutions).
-- [ ] Hosted PostgreSQL (Supabase) integration with automated Alembic migrations on deploy.
-- [ ] Automated GitHub Actions Continuous Deployment (CD) pipeline to build container images, push to Google Artifact Registry, and deploy revisions to Google Cloud Run with zero downtime.
-- [ ] Production hardening, secret management via Cloud Run environment secrets, custom domain/SSL mapping, and live health check verification.
+## Must-Haves (Milestone v2.1)
+- [ ] Document Ingestion & Chunking Pipeline for Pakistani financial regulations, tax laws, investment products, and product substitution databases.
+- [ ] Embedding generation pipeline with cost-effective, high-accuracy embeddings (e.g., Google text-embedding-004 / open-source HuggingFace sentence-transformers).
+- [ ] Vector database integration (e.g., ChromaDB for lightweight local persistence, with pgvector upgrade path for PostgreSQL/Supabase).
+- [ ] Hybrid Semantic Retrieval & Context Augmentation integrated into `GroqMiddleware` alongside existing user ledger/financial profile data.
+- [ ] RAG evaluation and test suite verifying source citation, retrieval accuracy, and guardrails against hallucinated tax/interest rates.
+- [ ] Web UI citation display in `/ai/advisor` chat showing source reference badges and confidence.
 
-## Phases
+## Milestone v2.1 Phases (RAG Architecture)
 
-### Phase 1: GCP Environment, Cloud Project Provisioning & API Setup
-**Status**: ⏳ Not Started  
-**Objective**: Install & configure Google Cloud SDK (gcloud CLI), authorize GCP project, enable Cloud Run (`run.googleapis.com`), Artifact Registry (`artifactregistry.googleapis.com`), and IAM APIs, and generate automation scripts.
+### Phase 1: Knowledge Corpus Curation & Ingestion Pipeline
+**Status**: ⏳ Ready to Plan  
+**Objective**: Curate markdown/JSON source documents for Pakistani tax slabs (income/sales tax), SBP policy rates & banking rules, National Savings schemes (rates & terms), Zakat rules, and curated market alternatives. Implement an automated document loader, normalizer, and chunking service.
 
-### Phase 2: Production Containerization & Redis Caching Layer Architecture
-**Status**: ⏳ Not Started  
-**Objective**: Build and optimize a production multi-stage Dockerfile for Cloud Run execution (listening on `$PORT`, supporting WebSockets/gunicorn), integrate Redis client/Flask-Caching layer for recommendation/analytics caching and SocketIO message queue, and verify local container execution.
+### Phase 2: Embedding Engine & Vector Store Setup
+**Status**: ⏳ Queued  
+**Objective**: Set up vector storage (ChromaDB / SQLite-vss / pgvector) and build an embedding service interface supporting local and cloud embedding models with caching to prevent redundant API calls.
 
-### Phase 3: Hosted PostgreSQL Database Setup & Migration Automation
-**Status**: ⏳ Not Started  
-**Objective**: Configure Supabase PostgreSQL connection string, verify Alembic/Flask-Migrate automated execution during container deployment or release job, and validate schema integrity with connection pooling (e.g. pgBouncer / Supabase transaction pooler).
+### Phase 3: Semantic Retrieval & Re-ranking Layer
+**Status**: ⏳ Queued  
+**Objective**: Build a query processor that generates query embeddings, performs hybrid search (semantic similarity + keyword/tag filtering by category/merchant), and ranks retrieved chunks with relevance thresholds.
 
-### Phase 4: Google Cloud Run Service Configuration & Artifact Registry Setup
-**Status**: ⏳ Not Started  
-**Objective**: Provision Google Artifact Registry repository, configure Cloud Run service specs (CPU allocation, memory, concurrency, session affinity for WebSockets, min/max instances, and environment secrets for DB & Redis), and verify direct container deployment.
+### Phase 4: Groq Advisor RAG Integration & Prompt Synthesis
+**Status**: ⏳ Queued  
+**Objective**: Connect the retrieval layer into `GroqMiddleware.chat()` and `recommender.py`. Dynamically augment system prompts with top-k retrieved context chunks, enforce citation markers (`[Source: ...]`), and handle fallback when relevance is low.
 
-### Phase 5: GitHub Actions Continuous Deployment (CD) Pipeline for Cloud Run
-**Status**: ⏳ Not Started  
-**Objective**: Extend `.github/workflows/ci.yml` or add `cd.yml` with automated Workload Identity Federation / Service Account deployment to build Docker image, push to Artifact Registry, execute Alembic migrations, deploy new revision to Cloud Run, and perform health check verification.
+### Phase 5: UI Citations, Verification & Benchmark Testing
+**Status**: ⏳ Queued  
+**Objective**: Update the chat frontend (`ai/advisor.html`) to render collapsible citation pills and source snippets. Author automated test cases validating retrieval relevance and hallucination prevention.
 
-### Phase 6: Production Hardening & Technical Debt Resolution (Gap Closure)
-**Status**: ⏳ Not Started  
-**Objective**: Resolve technical debt items identified in milestone audit: modernize deprecated timestamps, fix SQLite connection cleanup in test tearDown, and resolve Dependabot package vulnerability warnings.
+---
 
-**Gaps to Close:**
-- [ ] Migrate `datetime.utcnow()` across models and services to `datetime.now(timezone.utc)`.
-- [ ] Implement explicit engine/connection close in test harness tearDown (`test_ai_advisor.py`).
-- [ ] Perform dependency vulnerability bump and generate container-pinned requirements lock.
+## Paused Milestones
+
+### ⏸️ Milestone v2.0 - Production Deployment & Continuous Delivery (GCP Cloud Run + Supabase + Redis)
+**Status**: ⏸️ PAUSED (Paused on 2026-11-10 to prioritize RAG engine development)  
+**Goal**: Automated CD pipeline deploying FinanceFlow to Google Cloud Run with Redis caching & Supabase PostgreSQL.
+
+#### Paused Phases:
+- **Phase 1: GCP Environment, Cloud Project Provisioning & API Setup** (Plan 01-01 prepared, paused at authentication checkpoint)
+- **Phase 2: Production Containerization & Redis Caching Layer Architecture**
+- **Phase 3: Hosted PostgreSQL Database Setup & Migration Automation**
+- **Phase 4: Google Cloud Run Service Configuration & Artifact Registry Setup**
+- **Phase 5: GitHub Actions Continuous Deployment (CD) Pipeline for Cloud Run**
+- **Phase 6: Production Hardening & Technical Debt Resolution (Gap Closure)**
+

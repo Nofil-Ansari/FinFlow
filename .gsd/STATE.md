@@ -1,28 +1,30 @@
 # STATE.md - Project Memory
 
 ## Active Milestone
-**Milestone**: v2.0 - Production Deployment & Continuous Delivery (GCP Cloud Run + Supabase + Redis)
-**Active Branch**: main
-**Last Updated**: 2026-11-04
+**Milestone**: v2.1 - Localized Financial RAG & Vector Intelligence Engine  
+**Active Branch**: main  
+**Last Updated**: 2026-11-10  
 
 ## Current Position
-- **Milestone**: v2.0
-- **Phase**: Phase 1: GCP Environment, Cloud Project Provisioning & API Setup
-- **Status**: Plan 01-01 updated for Cloud Run + Redis and awaiting execution
-- **Active Plan**: `.gsd/phases/01/01-PLAN.md`
+- **Milestone**: v2.1
+- **Phase**: Phase 1: Knowledge Corpus Curation & Ingestion Pipeline
+- **Status**: Plan 01-01 created and awaiting user review/approval
+- **Active Plan**: `.gsd/phases/01-rag/01-PLAN.md`
 
-## Key Requirements & Inputs (from Prompts)
-- **Target Host**: Google Cloud Run (Serverless container runtime, automatic HTTPS, revision rollouts, auto-scaling)
-- **GCP Region**: Default region (e.g. `us-central1`) with Artifact Registry
-- **Caching & Backplane**: Redis (Upstash Redis or Cloud Memorystore for caching expensive analytics/substitutions & Flask-SocketIO pub/sub message queue)
-- **Database Strategy**: Hosted PostgreSQL (Supabase with connection pooling / Transaction Pooler)
-- **Deployment Trigger**: Automated GitHub Actions CD pipeline upon passing CI on main
-- **WebSocket & Networking**: Cloud Run with Session Affinity enabled and HTTP/2 or WebSockets enabled; container listens on dynamic `$PORT`
+## Key Requirements & Architecture Decisions (RAG System)
+- **Knowledge Domain**: Pakistani macroeconomic & personal finance data (FBR income tax slabs, SBP policy rates, National Savings rates/products, Zakat rules, and localized product/service substitutions).
+- **Vector Storage**: Lightweight embedded vector store for local dev (ChromaDB / SQLite-vss) with seamless compatibility with pgvector for production.
+- **Embedding Provider**: Pluggable embedding service (supporting Gemini `text-embedding-004` / open-source local embeddings via `sentence-transformers` / HuggingFace).
+- **Retrieval Strategy**: Hybrid retrieval (top-k semantic cosine similarity + category/keyword metadata filtering) with relevance threshold gating.
+- **Prompt Synthesis**: Augmented prompt injection into [`GroqMiddleware`](file:///D:/Projects/Project/finance_app/app/services/groq_middleware.py) combining user transactional context, financial profile, and retrieved knowledge chunks with explicit citations.
 
 ## Next Steps
-1. Run Plan 01-01: Author GCP environment scripts for Cloud Run + Artifact Registry, authorize `gcloud`, and enable required APIs (`run.googleapis.com`, `artifactregistry.googleapis.com`, `iam.googleapis.com`).
+1. Create Phase 1 Plan (`.gsd/phases/01-rag/01-PLAN.md` or `.gsd/phases/rag-01/01-PLAN.md`): Knowledge corpus curation, data models, chunking strategy, and document loader.
 
-## Gap Closure Mode
-Addressing 2 technical debt gap closure plans identified in Milestone v2.0 Audit:
-- **Plan 6.1 (fix-deprecations-and-teardown)**: Modernize UTC timestamps & SQLite connection cleanup.
-- **Plan 6.2 (fix-dependencies-and-lockfile)**: Audit vulnerable dependencies & pin production packages.
+---
+
+## Paused Milestones
+- **Milestone v2.0 - Production Deployment & Continuous Delivery (GCP Cloud Run + Supabase + Redis)**:
+  - **Status**: ⏸️ PAUSED on 2026-11-10
+  - **Paused At**: Phase 1 (Plan 01-01 scripts created, awaiting user GCP credentials/project selection)
+  - **Artifacts Preserved**: `scripts/gcp_setup.ps1`, `scripts/gcp_setup.sh`, `.env.gcp.example`, `.gsd/phases/01/01-PLAN.md`
