@@ -7,19 +7,16 @@
 
 ## Current Position
 - **Milestone**: v2.1
-- **Phase**: Phase 1: Knowledge Corpus Curation & Ingestion Pipeline
-- **Status**: Plan 01-01 created and awaiting user review/approval
-- **Active Plan**: `.gsd/phases/01-rag/01-PLAN.md`
+- **Phase**: Phase 2: Embedding Engine, Dual-Mode Vector Store & Two-Tier Redis Cache (Completed)
+- **Status**: ✅ Phase 2 executed and verified. Ready for Phase 3 (Semantic Retrieval & Re-ranking Layer).
+- **Summary**: `.gsd/phases/02-rag/02-SUMMARY.md`
 
-## Key Requirements & Architecture Decisions (RAG System)
-- **Knowledge Domain**: Pakistani macroeconomic & personal finance data (FBR income tax slabs, SBP policy rates, National Savings rates/products, Zakat rules, and localized product/service substitutions).
-- **Vector Storage**: Lightweight embedded vector store for local dev (ChromaDB / SQLite-vss) with seamless compatibility with pgvector for production.
-- **Embedding Provider**: Pluggable embedding service (supporting Gemini `text-embedding-004` / open-source local embeddings via `sentence-transformers` / HuggingFace).
-- **Retrieval Strategy**: Hybrid retrieval (top-k semantic cosine similarity + category/keyword metadata filtering) with relevance threshold gating.
-- **Prompt Synthesis**: Augmented prompt injection into [`GroqMiddleware`](file:///D:/Projects/Project/finance_app/app/services/groq_middleware.py) combining user transactional context, financial profile, and retrieved knowledge chunks with explicit citations.
+## Completed Phases
+- [x] Phase 1: Knowledge Corpus Curation & Ingestion Pipeline (`.gsd/phases/01-rag/01-PLAN.md`)
+- [x] Phase 2: Embedding Engine, Dual-Mode Vector Store & Two-Tier Redis Cache (`.gsd/phases/02-rag/01-PLAN.md`)
 
 ## Next Steps
-1. Create Phase 1 Plan (`.gsd/phases/01-rag/01-PLAN.md` or `.gsd/phases/rag-01/01-PLAN.md`): Knowledge corpus curation, data models, chunking strategy, and document loader.
+1. Create Phase 3 Plan (`.gsd/phases/03-rag/01-PLAN.md`): Semantic Retrieval, Hybrid Gating & Context Re-ranking Layer.
 
 ---
 

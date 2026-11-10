@@ -29,6 +29,7 @@ def estimate_token_count(text: str) -> int:
 @dataclass
 class KnowledgeDocument:
     """Represents a raw document loaded from the corpus."""
+
     doc_id: str
     title: str
     category: str
@@ -52,6 +53,7 @@ class KnowledgeDocument:
 @dataclass
 class KnowledgeChunk:
     """Represents a chunk derived from a KnowledgeDocument ready for embedding & retrieval."""
+
     chunk_id: str
     doc_id: str
     title: str
@@ -79,4 +81,3 @@ class KnowledgeChunk:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "KnowledgeChunk":
         return cls(**data)
-

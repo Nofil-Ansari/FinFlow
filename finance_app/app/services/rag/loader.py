@@ -36,11 +36,17 @@ def parse_markdown_frontmatter(content: str) -> Tuple[Dict[str, Any], str]:
                     try:
                         parsed_val = json.loads(val)
                     except Exception:
-                        items = [x.strip().strip("'\"") for x in val[1:-1].split(",") if x.strip()]
+                        items = [
+                            x.strip().strip("'\"")
+                            for x in val[1:-1].split(",")
+                            if x.strip()
+                        ]
                         parsed_val = items
                     metadata[key] = parsed_val
                 # Remove surrounding quotes
-                elif (val.startswith('"') and val.endswith('"')) or (val.startswith("'") and val.endswith("'")):
+                elif (val.startswith('"') and val.endswith('"')) or (
+                    val.startswith("'") and val.endswith("'")
+                ):
                     metadata[key] = val[1:-1]
                 else:
                     metadata[key] = val
@@ -66,7 +72,11 @@ class DocumentLoader:
         title = meta.get("title")
         if not title:
             h1_match = re.search(r"^#\s+(.+)$", body, re.MULTILINE)
-            title = h1_match.group(1).strip() if h1_match else doc_id.replace("_", " ").title()
+            title = (
+                h1_match.group(1).strip()
+                if h1_match
+                else doc_id.replace("_", " ").title()
+            )
 
         return KnowledgeDocument(
             doc_id=doc_id,
@@ -78,9 +88,20 @@ class DocumentLoader:
             authority=meta.get("authority"),
             effective_date=meta.get("effective_date"),
             tags=meta.get("tags", []),
-            metadata={k: v for k, v in meta.items() if k not in [
-                "title", "category", "source_url", "jurisdiction", "authority", "effective_date", "tags"
-            ]}
+            metadata={
+                k: v
+                for k, v in meta.items()
+                if k
+                not in [
+                    "title",
+                    "category",
+                    "source_url",
+                    "jurisdiction",
+                    "authority",
+                    "effective_date",
+                    "tags",
+                ]
+            },
         )
 
     @classmethod
@@ -103,7 +124,7 @@ class DocumentLoader:
                 f"**Jurisdiction**: {jurisdiction} | **Currency**: {currency}",
                 "",
                 "Verified cheaper alternatives and domestic product replacements:",
-                ""
+                "",
             ]
 
             all_keywords = []
@@ -116,7 +137,9 @@ class DocumentLoader:
                 lines.append(f"## Target Brand: {brand}")
                 lines.append(f"**Identified Keywords**: {', '.join(kws)}")
                 lines.append("")
-                lines.append("| Cheaper Alternative | Type | Pricing Model | Estimated Savings | Rationale |")
+                lines.append(
+                    "| Cheaper Alternative | Type | Pricing Model | Estimated Savings | Rationale |"
+                )
                 lines.append("|---|---|---|---|---|")
 
                 for alt in item.get("recommended_alternatives", []):
@@ -137,8 +160,9 @@ class DocumentLoader:
                     category="Consumer Substitutions",
                     body=body,
                     jurisdiction=jurisdiction,
-                    tags=["substitutions", "saving", "pakistan"] + list(set(all_keywords))[:10],
-                    metadata={"category_type": cat_name, "currency": currency}
+                    tags=["substitutions", "saving", "pakistan"]
+                    + list(set(all_keywords))[:10],
+                    metadata={"category_type": cat_name, "currency": currency},
                 )
             )
 
@@ -159,4 +183,3 @@ class DocumentLoader:
                 documents.extend(cls.load_substitutions_json(str(file)))
 
         return documents
-

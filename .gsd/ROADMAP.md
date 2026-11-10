@@ -4,9 +4,9 @@
 > **Goal**: Build an end-to-end Retrieval-Augmented Generation (RAG) system for FinanceFlow to ground the AI financial advisor in Pakistani market financial rules (FBR tax slabs, SBP regulations, National Savings schemes, Zakat calculations, and verified local product substitutions) using vector embeddings and similarity search.
 
 ## Must-Haves (Milestone v2.1)
-- [ ] Document Ingestion & Chunking Pipeline for Pakistani financial regulations, tax laws, investment products, and product substitution databases.
-- [ ] Embedding generation pipeline with cost-effective, high-accuracy embeddings (e.g., Google text-embedding-004 / open-source HuggingFace sentence-transformers).
-- [ ] Vector database integration (e.g., ChromaDB for lightweight local persistence, with pgvector upgrade path for PostgreSQL/Supabase).
+- [x] Document Ingestion & Chunking Pipeline for Pakistani financial regulations, tax laws, investment products, and product substitution databases.
+- [x] Embedding generation pipeline with cost-effective, high-accuracy embeddings (Google text-embedding-004 + zero-dependency local TF-IDF fallback).
+- [x] Vector database integration (Dual-mode: Local NumPy/JSON for dev, pgvector for PostgreSQL / Supabase).
 - [ ] Hybrid Semantic Retrieval & Context Augmentation integrated into `GroqMiddleware` alongside existing user ledger/financial profile data.
 - [ ] RAG evaluation and test suite verifying source citation, retrieval accuracy, and guardrails against hallucinated tax/interest rates.
 - [ ] Web UI citation display in `/ai/advisor` chat showing source reference badges and confidence.
@@ -14,15 +14,15 @@
 ## Milestone v2.1 Phases (RAG Architecture)
 
 ### Phase 1: Knowledge Corpus Curation & Ingestion Pipeline
-**Status**: ⏳ Ready to Plan  
+**Status**: ✅ Completed (2026-11-10)  
 **Objective**: Curate markdown/JSON source documents for Pakistani tax slabs (income/sales tax), SBP policy rates & banking rules, National Savings schemes (rates & terms), Zakat rules, and curated market alternatives. Implement an automated document loader, normalizer, and chunking service.
 
-### Phase 2: Embedding Engine & Vector Store Setup
-**Status**: ⏳ Queued  
-**Objective**: Set up vector storage (ChromaDB / SQLite-vss / pgvector) and build an embedding service interface supporting local and cloud embedding models with caching to prevent redundant API calls.
+### Phase 2: Embedding Engine, Dual-Mode Vector Store & Two-Tier Redis Cache
+**Status**: ✅ Completed (2026-11-10)  
+**Objective**: Build a 768-dimensional pluggable embedding engine (Google Gemini `text-embedding-004` + zero-dependency local fallback), a two-tier L1 Redis + L2 Disk embedding cache with content-hash keys, and a Dual-Mode Vector Store supporting both local NumPy/JSON indexing and `pgvector` on Supabase for serverless Docker/Cloud Run deployment.
 
 ### Phase 3: Semantic Retrieval & Re-ranking Layer
-**Status**: ⏳ Queued  
+**Status**: 🚀 Next Up  
 **Objective**: Build a query processor that generates query embeddings, performs hybrid search (semantic similarity + keyword/tag filtering by category/merchant), and ranks retrieved chunks with relevance thresholds.
 
 ### Phase 4: Groq Advisor RAG Integration & Prompt Synthesis
@@ -48,4 +48,3 @@
 - **Phase 4: Google Cloud Run Service Configuration & Artifact Registry Setup**
 - **Phase 5: GitHub Actions Continuous Deployment (CD) Pipeline for Cloud Run**
 - **Phase 6: Production Hardening & Technical Debt Resolution (Gap Closure)**
-

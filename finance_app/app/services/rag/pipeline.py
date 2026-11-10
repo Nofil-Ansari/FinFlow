@@ -18,7 +18,7 @@ class CorpusPipeline:
         self,
         raw_dir: str = "data/knowledge/raw",
         processed_dir: str = "data/knowledge/processed",
-        chunker: MarkdownHeaderChunker = None
+        chunker: MarkdownHeaderChunker = None,
     ):
         self.raw_dir = Path(raw_dir)
         self.processed_dir = Path(processed_dir)
@@ -46,10 +46,12 @@ class CorpusPipeline:
             "total_documents": len(docs),
             "total_chunks": len(all_chunks),
             "categories": {},
-            "document_ids": [d.doc_id for d in docs]
+            "document_ids": [d.doc_id for d in docs],
         }
         for ch in all_chunks:
-            summary["categories"][ch.category] = summary["categories"].get(ch.category, 0) + 1
+            summary["categories"][ch.category] = (
+                summary["categories"].get(ch.category, 0) + 1
+            )
 
         with open(self.processed_dir / "manifest.json", "w", encoding="utf-8") as f:
             json.dump(summary, f, indent=2)
@@ -68,4 +70,3 @@ class CorpusPipeline:
                 if line.strip():
                     chunks.append(KnowledgeChunk.from_dict(json.loads(line.strip())))
         return chunks
-

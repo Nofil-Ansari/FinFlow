@@ -8,14 +8,18 @@ import os
 import shutil
 from pathlib import Path
 
-from app.services.rag.models import KnowledgeDocument, KnowledgeChunk, compute_content_hash, estimate_token_count
+from app.services.rag.models import (
+    KnowledgeDocument,
+    KnowledgeChunk,
+    compute_content_hash,
+    estimate_token_count,
+)
 from app.services.rag.loader import DocumentLoader, parse_markdown_frontmatter
 from app.services.rag.chunker import MarkdownHeaderChunker
 from app.services.rag.pipeline import CorpusPipeline
 
 
 class TestRagIngestion(unittest.TestCase):
-
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
         self.raw_dir = Path(self.test_dir) / "raw"
@@ -73,7 +77,7 @@ Here are the official tax slabs:
 | 3 | 1200k-2200k | 15% |
 
 Keep table together!
-"""
+""",
         )
         chunker = MarkdownHeaderChunker(target_chunk_tokens=100)
         chunks = chunker.chunk_document(doc)
@@ -86,16 +90,19 @@ Keep table together!
         # Point to actual production knowledge folder
         base_dir = Path(__file__).resolve().parent.parent
         actual_raw_dir = base_dir / "data" / "knowledge" / "raw"
-        
-        self.assertTrue(actual_raw_dir.exists(), f"Raw knowledge dir not found at {actual_raw_dir}")
+
+        self.assertTrue(
+            actual_raw_dir.exists(), f"Raw knowledge dir not found at {actual_raw_dir}"
+        )
 
         pipeline = CorpusPipeline(
-            raw_dir=str(actual_raw_dir),
-            processed_dir=str(self.processed_dir)
+            raw_dir=str(actual_raw_dir), processed_dir=str(self.processed_dir)
         )
         docs, chunks = pipeline.run()
 
-        self.assertGreaterEqual(len(docs), 5, "Expected at least 5 raw documents/substitutions categories")
+        self.assertGreaterEqual(
+            len(docs), 5, "Expected at least 5 raw documents/substitutions categories"
+        )
         self.assertGreater(len(chunks), 15, "Expected at least 15 granular chunks")
 
         # Verify output files
@@ -119,4 +126,3 @@ Keep table together!
 
 if __name__ == "__main__":
     unittest.main()
-

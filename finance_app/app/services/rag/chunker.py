@@ -39,7 +39,11 @@ class MarkdownHeaderChunker:
                 h1_match = re.search(r"^#\s+(.+)$", sec_text, re.MULTILINE)
                 section_title = h1_match.group(1).strip() if h1_match else doc.title
 
-            combined_title = f"{doc.title} — {section_title}" if section_title != doc.title else doc.title
+            combined_title = (
+                f"{doc.title} — {section_title}"
+                if section_title != doc.title
+                else doc.title
+            )
 
             tokens = estimate_token_count(sec_text)
 
@@ -62,7 +66,7 @@ class MarkdownHeaderChunker:
                             "source_doc_title": doc.title,
                             "source_url": doc.source_url,
                             "authority": doc.authority,
-                        }
+                        },
                     )
                 )
                 section_idx += 1
@@ -76,7 +80,9 @@ class MarkdownHeaderChunker:
                         continue
 
                     h3_match = re.match(r"^###\s+(.+)$", sub_text, re.MULTILINE)
-                    sub_title = h3_match.group(1).strip() if h3_match else f"Part {sub_idx + 1}"
+                    sub_title = (
+                        h3_match.group(1).strip() if h3_match else f"Part {sub_idx + 1}"
+                    )
                     sub_combined_title = f"{combined_title} ({sub_title})"
 
                     chunk_id = f"{doc.doc_id}_s{section_idx:02d}_{sub_idx:02d}"
@@ -97,11 +103,10 @@ class MarkdownHeaderChunker:
                                 "source_doc_title": doc.title,
                                 "source_url": doc.source_url,
                                 "authority": doc.authority,
-                            }
+                            },
                         )
                     )
                     sub_idx += 1
                 section_idx += 1
 
         return chunks
-
