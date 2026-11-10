@@ -161,18 +161,44 @@ class PgVectorStore(VectorStoreBase):
 
     def __init__(self, db_session=None):
         self.session = db_session
+        self._app_ctx = None
 
     def _get_session(self):
         if self.session:
             return self.session
-        from app import db
+        from flask import has_app_context
+        from app import db, create_app
+
+        if not has_app_context():
+            app = create_app()
+            self._app_ctx = app.app_context()
+            self._app_ctx.push()
 
         return db.session
+
+    def _ensure_schema(self, session):
+        """Ensures vector extension and table exist before operations."""
+        from sqlalchemy import text
+        from app.models.rag_chunk import RagKnowledgeChunk
+
+        try:
+            session.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            logger.debug(f"Vector extension notice/error: {e}")
+
+        try:
+            bind = session.get_bind()
+            RagKnowledgeChunk.__table__.create(bind, checkfirst=True)
+        except Exception as e:
+            logger.debug(f"Table creation notice/error: {e}")
 
     def add_chunks(self, chunks: List[KnowledgeChunk], embeddings: List[List[float]]):
         from app.models.rag_chunk import RagKnowledgeChunk
 
         session = self._get_session()
+        self._ensure_schema(session)
         for ch, emb in zip(chunks, embeddings):
             existing = (
                 session.query(RagKnowledgeChunk).filter_by(chunk_id=ch.chunk_id).first()
@@ -209,29 +235,34 @@ class PgVectorStore(VectorStoreBase):
         category: Optional[str] = None,
         tag: Optional[str] = None,
     ) -> List[Tuple[KnowledgeChunk, float]]:
+        from sqlalchemy import func, cast, String
         from app.models.rag_chunk import RagKnowledgeChunk
 
         session = self._get_session()
-        query = session.query(RagKnowledgeChunk)
-
-        if category:
-            query = query.filter(RagKnowledgeChunk.category == category)
-
-        # If pgvector cosine distance operator is available
         try:
-            # 1 - (embedding <=> query_vector) computes cosine similarity
-            results_raw = (
-                query.order_by(
-                    RagKnowledgeChunk.embedding.cosine_distance(query_vector)
+            query = session.query(RagKnowledgeChunk)
+
+            if category:
+                query = query.filter(
+                    func.lower(RagKnowledgeChunk.category) == category.lower()
                 )
-                .limit(top_k * 2)
+
+            if tag:
+                query = query.filter(
+                    cast(RagKnowledgeChunk.tags, String).ilike(f'%"{tag}"%')
+                )
+
+            distance_expr = RagKnowledgeChunk.embedding.cosine_distance(query_vector)
+            results_raw = (
+                query.add_columns(distance_expr)
+                .order_by(distance_expr)
+                .limit(top_k)
                 .all()
             )
 
             results = []
-            for item in results_raw:
-                if tag and tag.lower() not in [t.lower() for t in (item.tags or [])]:
-                    continue
+            for item, dist in results_raw:
+                similarity = 1.0 - float(dist) if dist is not None else 0.0
                 chunk = KnowledgeChunk(
                     chunk_id=item.chunk_id,
                     doc_id=item.doc_id,
@@ -243,16 +274,12 @@ class PgVectorStore(VectorStoreBase):
                     content_hash=item.content_hash,
                     metadata=item.chunk_metadata or {},
                 )
-                # Compute approximate similarity score
-                results.append((chunk, 1.0))
-                if len(results) >= top_k:
-                    break
+                results.append((chunk, similarity))
             return results
         except Exception as e:
-            logger.error(
-                f"PgVector query failed: {e}. Falling back to Python similarity."
-            )
-            return []
+            session.rollback()
+            logger.error(f"PgVector query failed: {e}")
+            raise
 
     def count(self) -> int:
         from app.models.rag_chunk import RagKnowledgeChunk

@@ -11,7 +11,7 @@
 
 1. **Pluggable 768-Dim Embedding Engine (`app/services/rag/embeddings.py`)**:
    - `LocalTfidfEmbedding(dimension=768)`: Deterministic, normalized 768-dimensional word hash-projection vector generator requiring zero external network calls or C-dependencies.
-   - `GeminiEmbeddingService`: Google Gemini `text-embedding-004` REST provider producing 768-dim embeddings with automatic fallback to local TF-IDF if unconfigured or on network error.
+   - `GeminiEmbeddingService`: Google Gemini `gemini-embedding-001` REST provider producing 768-dim embeddings with automatic fallback to local TF-IDF if unconfigured or on network error.
    - `DiskCache`: L2 persistent JSON cache keyed by content SHA256 (`embeddings_cache.json`).
    - `TwoTierCachedEmbeddingService`: L1 Redis (`rag:chunk:embedding:<sha256>`) + L2 Disk with graceful failover to disk-only mode when Redis is offline.
 

@@ -8,13 +8,16 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from unittest.mock import patch, MagicMock
+
 from app.services.rag.models import KnowledgeChunk
 from app.services.rag.embeddings import (
     LocalTfidfEmbedding,
+    GeminiEmbeddingService,
     DiskCache,
     TwoTierCachedEmbeddingService,
 )
-from app.services.rag.vector_store import LocalVectorStore
+from app.services.rag.vector_store import LocalVectorStore, PgVectorStore
 
 
 class TestEmbeddingAndVectorStore(unittest.TestCase):
@@ -127,6 +130,99 @@ class TestEmbeddingAndVectorStore(unittest.TestCase):
         filtered_results = store.search(q_vec, top_k=5, category="banking")
         self.assertEqual(len(filtered_results), 1)
         self.assertEqual(filtered_results[0][0].chunk_id, "sbp-01")
+
+    def test_gemini_fallback_indicator_and_cache_bypass(self):
+        gemini_svc = GeminiEmbeddingService(api_key="")
+        cached_svc = TwoTierCachedEmbeddingService(
+            inner_service=gemini_svc,
+            cache_dir=self.cache_dir,
+        )
+        vec = cached_svc.embed_text("sample fallback text")
+        self.assertEqual(len(vec), 768)
+        self.assertTrue(getattr(vec, "is_fallback", False))
+
+        # Ensure fallback embeddings are NOT written to disk cache
+        cache = DiskCache(cache_dir=self.cache_dir)
+        h = cached_svc._hash_text("sample fallback text")
+        self.assertIsNone(cache.get(h))
+
+    @patch("requests.post")
+    def test_gemini_header_key_and_output_dimensionality(self, mock_post):
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {"embedding": {"values": [0.05] * 768}}
+        mock_post.return_value = mock_resp
+
+        svc = GeminiEmbeddingService(api_key="secret-key-xyz")
+        vec = svc.embed_text("test query")
+
+        self.assertEqual(len(vec), 768)
+        self.assertFalse(getattr(vec, "is_fallback", True))
+
+        # Check call arguments
+        mock_post.assert_called_once()
+        args, kwargs = mock_post.call_args
+        called_url = args[0]
+        # Key must NOT be in URL
+        self.assertNotIn("secret-key-xyz", called_url)
+        self.assertEqual(
+            called_url,
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent",
+        )
+
+        # Key must be in header
+        self.assertEqual(kwargs["headers"].get("x-goog-api-key"), "secret-key-xyz")
+
+        # Payload must include outputDimensionality: 768
+        self.assertEqual(kwargs["json"].get("outputDimensionality"), 768)
+        self.assertEqual(kwargs["json"].get("model"), "models/gemini-embedding-001")
+
+    def test_pg_vector_store_search_error_rolls_back_and_raises(self):
+        mock_session = MagicMock()
+        mock_session.query.side_effect = RuntimeError("Database connection lost")
+        store = PgVectorStore(db_session=mock_session)
+
+        with self.assertRaises(RuntimeError):
+            store.search([0.1] * 768, top_k=5)
+
+        mock_session.rollback.assert_called_once()
+
+    def test_pg_vector_store_search_scoring_and_tag_filter(self):
+        mock_session = MagicMock()
+        mock_query = MagicMock()
+        mock_session.query.return_value = mock_query
+        mock_query.filter.return_value = mock_query
+        mock_query.add_columns.return_value = mock_query
+        mock_query.order_by.return_value = mock_query
+        mock_query.limit.return_value = mock_query
+
+        mock_item = MagicMock()
+        mock_item.chunk_id = "chunk-1"
+        mock_item.doc_id = "doc-1"
+        mock_item.title = "Test Title"
+        mock_item.content = "Test Content"
+        mock_item.category = "Taxation"
+        mock_item.tags = ["fbr", "tax"]
+        mock_item.token_count = 50
+        mock_item.content_hash = "hash123"
+        mock_item.chunk_metadata = {"authority": "FBR"}
+
+        # Simulate cosine distance = 0.25 -> similarity should be 1 - 0.25 = 0.75
+        mock_query.limit.return_value.all.return_value = [(mock_item, 0.25)]
+
+        store = PgVectorStore(db_session=mock_session)
+        results = store.search(
+            query_vector=[0.1] * 768,
+            top_k=3,
+            category="taxation",
+            tag="tax",
+        )
+
+        self.assertEqual(len(results), 1)
+        chunk, score = results[0]
+        self.assertEqual(chunk.chunk_id, "chunk-1")
+        self.assertAlmostEqual(score, 0.75, places=4)
+        self.assertEqual(chunk.metadata["authority"], "FBR")
 
 
 if __name__ == "__main__":

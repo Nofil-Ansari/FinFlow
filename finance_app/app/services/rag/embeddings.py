@@ -1,9 +1,10 @@
 """
 Embedding service layer with two-tier Redis + Disk caching and pluggable providers.
-Supports Google Gemini text-embedding-004 (768-dim) and zero-dependency local TF-IDF (768-dim).
+Supports Google Gemini gemini-embedding-001 (768-dim) and zero-dependency local TF-IDF (768-dim).
 """
 
 import os
+import re
 import json
 import hashlib
 import logging
@@ -22,6 +23,14 @@ try:
 except ImportError:
     redis = None
     REDIS_AVAILABLE = False
+
+
+class EmbeddingResult(list):
+    """List subclass holding embedding vector values and a fallback status indicator."""
+
+    def __init__(self, values: List[float], is_fallback: bool = False):
+        super().__init__(values)
+        self.is_fallback = is_fallback
 
 
 class BaseEmbeddingService:
@@ -68,14 +77,14 @@ class LocalTfidfEmbedding(BaseEmbeddingService):
 
 
 class GeminiEmbeddingService(BaseEmbeddingService):
-    """Google Gemini text-embedding-004 REST embedding provider producing 768-dim vectors.
+    """Google Gemini gemini-embedding-001 REST embedding provider producing 768-dim vectors.
     Falls back gracefully to LocalTfidfEmbedding if GEMINI_API_KEY is not configured or on network error.
     """
 
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model: str = "text-embedding-004",
+        model: str = "gemini-embedding-001",
         fallback_service: Optional[BaseEmbeddingService] = None,
     ):
         self.api_key = api_key or os.environ.get("GEMINI_API_KEY", "")
@@ -85,28 +94,40 @@ class GeminiEmbeddingService(BaseEmbeddingService):
 
     def embed_text(self, text: str) -> List[float]:
         if not self.api_key:
-            return self.fallback.embed_text(text)
+            return EmbeddingResult(self.fallback.embed_text(text), is_fallback=True)
 
-        url = f"{self.endpoint}?key={self.api_key}"
+        headers = {
+            "x-goog-api-key": self.api_key,
+            "Content-Type": "application/json",
+        }
         payload = {
             "model": f"models/{self.model}",
             "content": {"parts": [{"text": text}]},
+            "outputDimensionality": 768,
         }
 
         try:
-            resp = requests.post(url, json=payload, timeout=10)
+            resp = requests.post(
+                self.endpoint, headers=headers, json=payload, timeout=10
+            )
             if resp.status_code == 200:
                 data = resp.json()
                 values = data.get("embedding", {}).get("values", [])
                 if len(values) == 768:
-                    return values
+                    return EmbeddingResult(values, is_fallback=False)
             logger.warning(
                 f"Gemini API returned status {resp.status_code}. Using local TF-IDF fallback."
             )
-            return self.fallback.embed_text(text)
+            return EmbeddingResult(self.fallback.embed_text(text), is_fallback=True)
         except Exception as e:
-            logger.warning(f"Gemini API call failed: {e}. Using local TF-IDF fallback.")
-            return self.fallback.embed_text(text)
+            err_msg = str(e)
+            if self.api_key:
+                err_msg = err_msg.replace(self.api_key, "[REDACTED]")
+            err_msg = re.sub(r"key=[^\s&'\"]+", "key=[REDACTED]", err_msg)
+            logger.warning(
+                f"Gemini API call failed ({type(e).__name__}): {err_msg}. Using local TF-IDF fallback."
+            )
+            return EmbeddingResult(self.fallback.embed_text(text), is_fallback=True)
 
 
 class DiskCache:
@@ -192,7 +213,7 @@ class TwoTierCachedEmbeddingService(BaseEmbeddingService):
             try:
                 cached_str = self.redis_client.get(r_key)
                 if cached_str:
-                    return json.loads(cached_str)
+                    return EmbeddingResult(json.loads(cached_str), is_fallback=False)
             except Exception as e:
                 logger.debug(f"Redis read error: {e}")
 
@@ -205,22 +226,24 @@ class TwoTierCachedEmbeddingService(BaseEmbeddingService):
                     self.redis_client.set(r_key, json.dumps(cached_disk))
                 except Exception:
                     pass
-            return cached_disk
+            return EmbeddingResult(cached_disk, is_fallback=False)
 
         # Cache Miss: Compute embedding
-        vec = self.inner_service.embed_text(text)
+        res = self.inner_service.embed_text(text)
+        is_fallback = getattr(res, "is_fallback", False)
 
-        # Populate Tier 2 (Disk)
-        self.disk_cache.set(content_hash, vec)
+        if not is_fallback:
+            # Populate Tier 2 (Disk)
+            self.disk_cache.set(content_hash, list(res))
 
-        # Populate Tier 1 (Redis)
-        if self.redis_client:
-            try:
-                self.redis_client.set(r_key, json.dumps(vec))
-            except Exception as e:
-                logger.debug(f"Redis write error: {e}")
+            # Populate Tier 1 (Redis)
+            if self.redis_client:
+                try:
+                    self.redis_client.set(r_key, json.dumps(list(res)))
+                except Exception as e:
+                    logger.debug(f"Redis write error: {e}")
 
-        return vec
+        return EmbeddingResult(res, is_fallback=is_fallback)
 
     def embed_batch(self, texts: List[str]) -> List[List[float]]:
         results: List[List[float]] = []
@@ -251,7 +274,7 @@ class TwoTierCachedEmbeddingService(BaseEmbeddingService):
                         pass
 
             if found is not None:
-                results.append(found)
+                results.append(EmbeddingResult(found, is_fallback=False))
             else:
                 results.append([])
                 missing_indices.append(idx)
@@ -262,13 +285,15 @@ class TwoTierCachedEmbeddingService(BaseEmbeddingService):
             for orig_idx, text, vec in zip(missing_indices, missing_texts, new_vectors):
                 h = self._hash_text(text)
                 r_key = self._redis_key(h)
-                results[orig_idx] = vec
-                self.disk_cache.set(h, vec)
-                if self.redis_client:
-                    try:
-                        self.redis_client.set(r_key, json.dumps(vec))
-                    except Exception:
-                        pass
+                is_fb = getattr(vec, "is_fallback", False)
+                results[orig_idx] = EmbeddingResult(vec, is_fallback=is_fb)
+                if not is_fb:
+                    self.disk_cache.set(h, list(vec))
+                    if self.redis_client:
+                        try:
+                            self.redis_client.set(r_key, json.dumps(list(vec)))
+                        except Exception:
+                            pass
 
         return results
 

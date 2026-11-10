@@ -106,50 +106,61 @@ def cmd_search(query: str):
 
 
 def cmd_embed():
-    pipeline = get_pipeline()
-    chunks = pipeline.load_processed_chunks()
-    if not chunks:
-        print("No processed chunks found. Ingesting first...")
-        _, chunks = pipeline.run()
+    from app import create_app
 
-    print(f"Embedding {len(chunks)} knowledge chunks...")
-    embedding_svc = get_embedding_service()
-    vector_store = get_vector_store()
+    app = create_app()
+    with app.app_context():
+        pipeline = get_pipeline()
+        chunks = pipeline.load_processed_chunks()
+        if not chunks:
+            print("No processed chunks found. Ingesting first...")
+            _, chunks = pipeline.run()
 
-    texts = [f"{c.title}\n{c.content}" for c in chunks]
-    embeddings = embedding_svc.embed_batch(texts)
+        print(f"Embedding {len(chunks)} knowledge chunks...")
+        embedding_svc = get_embedding_service()
+        vector_store = get_vector_store()
 
-    print(
-        f"Indexing {len(embeddings)} vectors into vector store ({vector_store.__class__.__name__})..."
-    )
-    vector_store.add_chunks(chunks, embeddings)
-    print("✓ Vector store indexing complete!")
-    print(f"  • Total indexed items: {vector_store.count()}")
+        texts = [f"{c.title}\n{c.content}" for c in chunks]
+        embeddings = embedding_svc.embed_batch(texts)
+
+        print(
+            f"Indexing {len(embeddings)} vectors into vector store ({vector_store.__class__.__name__})..."
+        )
+        vector_store.add_chunks(chunks, embeddings)
+        print("✓ Vector store indexing complete!")
+        print(f"  • Total indexed items: {vector_store.count()}")
 
 
 def cmd_query(query: str, top_k: int = 5):
-    embedding_svc = get_embedding_service()
-    vector_store = get_vector_store()
+    from app import create_app
 
-    if vector_store.count() == 0:
-        print("Vector store is empty. Please run 'python manage_rag.py embed' first.")
-        return
+    app = create_app()
+    with app.app_context():
+        embedding_svc = get_embedding_service()
+        vector_store = get_vector_store()
 
-    print(f"Generating query embedding for: '{query}'...")
-    query_vec = embedding_svc.embed_text(query)
+        if vector_store.count() == 0:
+            print(
+                "Vector store is empty. Please run 'python manage_rag.py embed' first."
+            )
+            return
 
-    print(f"Searching top {top_k} nearest neighbors...\n" + "─" * 60)
-    results = vector_store.search(query_vec, top_k=top_k)
+        print(f"Generating query embedding for: '{query}'...")
+        query_vec = embedding_svc.embed_text(query)
 
-    if not results:
-        print("No results found.")
-        return
+        print(f"Searching top {top_k} nearest neighbors...\n" + "─" * 60)
+        results = vector_store.search(query_vec, top_k=top_k)
 
-    for i, (chunk, score) in enumerate(results, 1):
-        print(f"[{i}] Score: {score:.4f} | {chunk.title} ({chunk.category})")
-        print(f"    Chunk ID: {chunk.chunk_id} | Authority: {chunk.jurisdiction}")
-        preview = chunk.content.strip().replace("\n", " ")[:200]
-        print(f"    Snippet: {preview}...\n")
+        if not results:
+            print("No results found.")
+            return
+
+        for i, (chunk, score) in enumerate(results, 1):
+            print(f"[{i}] Score: {score:.4f} | {chunk.title} ({chunk.category})")
+            authority = (chunk.metadata or {}).get("authority", "N/A")
+            print(f"    Chunk ID: {chunk.chunk_id} | Authority: {authority}")
+            preview = chunk.content.strip().replace("\n", " ")[:200]
+            print(f"    Snippet: {preview}...\n")
 
 
 def cmd_warm_cache():
