@@ -1,0 +1,143 @@
+{
+  "version": "1.0",
+  "jurisdiction": "Pakistan",
+  "currency": "PKR",
+  "last_updated": "2024-11-01",
+  "categories": [
+    {
+      "category_name": "Transportation & Mobility",
+      "substitutions": [
+        {
+          "original_brand": "Uber / Careem Premium",
+          "match_keywords": ["uber", "careem", "careem go+"],
+          "recommended_alternatives": [
+            {
+              "name": "InDrive",
+              "type": "Ride-Hailing App",
+              "price_model": "Direct fare bidding",
+              "estimated_saving_pct": 30,
+              "saving_rationale": "Allows direct negotiation without dynamic surge multipliers."
+            },
+            {
+              "name": "Bykea",
+              "type": "Motorcycle / Ride-Hailing",
+              "price_model": "PKR 40-120 per trip",
+              "estimated_saving_pct": 65,
+              "saving_rationale": "Ideal for single commuters traveling under 7km."
+            },
+            {
+              "name": "MetroBus / Speedo / Orange Line",
+              "type": "Public Rapid Transit",
+              "price_model": "PKR 20-50 per ride",
+              "estimated_saving_pct": 85,
+              "saving_rationale": "High-frequency fixed transit with zero traffic congestion."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "category_name": "Digital Subscriptions & Streaming",
+      "substitutions": [
+        {
+          "original_brand": "Netflix Standard / Premium",
+          "match_keywords": ["netflix"],
+          "recommended_alternatives": [
+            {
+              "name": "Netflix Mobile Plan",
+              "type": "Official Tier Downgrade",
+              "price_model": "PKR 250/mo",
+              "estimated_saving_pct": 75,
+              "saving_rationale": "Sufficient for smartphone/tablet viewers without multi-screen overhead."
+            },
+            {
+              "name": "Tapmad TV",
+              "type": "Local Streaming Service",
+              "price_model": "PKR 250/mo",
+              "estimated_saving_pct": 75,
+              "saving_rationale": "Includes domestic drama content and live sports broadcast rights."
+            },
+            {
+              "name": "YouTube Premium Family Share",
+              "type": "Family Sharing Plan",
+              "price_model": "PKR 540/mo split 5 ways (~PKR 108/user)",
+              "estimated_saving_pct": 80,
+              "saving_rationale": "Bundles YouTube ad-free streaming and YouTube Music for the entire household."
+            }
+          ]
+        },
+        {
+          "original_brand": "Spotify Individual",
+          "match_keywords": ["spotify"],
+          "recommended_alternatives": [
+            {
+              "name": "Spotify Family / Duo",
+              "type": "Shared Subscription",
+              "price_model": "PKR 479/mo for 6 accounts (~PKR 80/user)",
+              "estimated_saving_pct": 60,
+              "saving_rationale": "Full premium quality at a fraction of individual billing."
+            },
+            {
+              "name": "YouTube Music Free",
+              "type": "Ad-supported Tier",
+              "price_model": "PKR 0",
+              "estimated_saving_pct": 100,
+              "saving_rationale": "Identical music catalog with background audio workarounds."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "category_name": "Healthcare & Pharmaceuticals",
+      "substitutions": [
+        {
+          "original_brand": "Panadol (GSK) / Branded Paracetamol",
+          "match_keywords": ["panadol", "calpol", "disprin"],
+          "recommended_alternatives": [
+            {
+              "name": "Generic Paracetamol (DRAP Approved)",
+              "type": "Generic Pharmaceutical",
+              "price_model": "PKR 15-25 per blister pack vs PKR 75+",
+              "estimated_saving_pct": 65,
+              "saving_rationale": "Identical active pharmaceutical ingredient (500mg Paracetamol) adhering to DRAP standards."
+            },
+            {
+              "name": "Dawaai.pk / Sehat.com.pk bulk ordering",
+              "type": "Online Pharmacy",
+              "price_model": "10-20% discount on generic prescriptions",
+              "estimated_saving_pct": 20,
+              "saving_rationale": "Verified temperature-controlled logistics with bundle pricing."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "category_name": "Dining & Fast Food",
+      "substitutions": [
+        {
+          "original_brand": "International Fast Food (McDonald's / KFC)",
+          "match_keywords": ["mcdonald", "kfc", "hardees", "burger king"],
+          "recommended_alternatives": [
+            {
+              "name": "Local Broast / Burger Establishments",
+              "type": "Domestic Restaurant",
+              "price_model": "PKR 350-500 per meal vs PKR 1,000+",
+              "estimated_saving_pct": 50,
+              "saving_rationale": "Equal portion size and comparable taste profiles without foreign royalty surcharges."
+            },
+            {
+              "name": "Sunday Meal Prep / Home Freezing",
+              "type": "Home Cooking Strategy",
+              "price_model": "PKR 120-180 per meal",
+              "estimated_saving_pct": 80,
+              "saving_rationale": "Bulk cooking chicken patties or marinated barbecue portions."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+

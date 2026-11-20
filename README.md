@@ -1,6 +1,6 @@
 # FinanceFlow — AI-Powered Personal Finance Advisor & BI Analytics
 
-> An intelligent, localized personal finance management ecosystem built for the Pakistani economy. Combines a full multi-account ledger with an ultra-fast LLM financial advisor powered by Groq, a Retrieval-Augmented Generation (RAG) engine grounded in verified Pakistani statutory knowledge, predictive ML spending analytics, real-time WebSocket ledger sync, and dual-format executive reporting.
+> An intelligent, localized personal finance management ecosystem built for the Pakistani economy. Combines a full multi-account ledger with an ultra-fast LLM financial advisor powered by Groq, a Retrieval-Augmented Generation (RAG) engine grounded in verified Pakistani statutory knowledge, predictive ML spending analytics, real-time WebSocket ledger sync,   and dual-format executive reporting.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python: 3.13+](https://img.shields.io/badge/Python-3.13+-blue.svg)](https://www.python.org/)

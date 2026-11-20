@@ -105,6 +105,7 @@ def chat():
             "is_fallback": result["is_fallback"],
             "model_used": result.get("model_used", "Default"),
             "source": result.get("source", "none"),
+            "citations": result.get("citations", []),
         }
     )
 

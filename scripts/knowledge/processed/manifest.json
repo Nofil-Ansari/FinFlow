@@ -1,0 +1,21 @@
+{
+  "total_documents": 8,
+  "total_chunks": 30,
+  "categories": {
+    "Taxation": 6,
+    "Investments": 5,
+    "Banking": 5,
+    "Zakat & Charity": 5,
+    "Consumer Substitutions": 9
+  },
+  "document_ids": [
+    "01_fbr_income_tax_2024_2025",
+    "02_national_savings_schemes_rates",
+    "03_sbp_banking_regulations_monetary",
+    "04_zakat_nisab_and_declarations",
+    "substitutions_transportation_and_mobility",
+    "substitutions_digital_subscriptions_and_streaming",
+    "substitutions_healthcare_and_pharmaceuticals",
+    "substitutions_dining_and_fast_food"
+  ]
+}

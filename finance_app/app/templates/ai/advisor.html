@@ -413,6 +413,95 @@
         border: 1px solid rgba(99, 102, 241, 0.3);
         color: #a5b4fc;
     }
+
+    /* ── RAG Citation UI ───────────────────────────────────────────── */
+    .citation-container {
+        margin-top: 6px;
+        font-size: 0.82rem;
+    }
+
+    .citation-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(99, 102, 241, 0.12);
+        border: 1px solid rgba(99, 102, 241, 0.25);
+        border-radius: 20px;
+        padding: 4px 12px;
+        cursor: pointer;
+        color: #a5b4fc;
+        font-size: 0.78rem;
+        font-weight: 500;
+        user-select: none;
+        transition: background 0.2s, border-color 0.2s;
+    }
+    .citation-pill:hover {
+        background: rgba(99, 102, 241, 0.22);
+        border-color: rgba(99, 102, 241, 0.45);
+    }
+    .citation-pill .caret { font-size: 0.65rem; opacity: 0.7; }
+
+    .citation-drawer {
+        overflow: hidden;
+        max-height: 0;
+        transition: max-height 0.3s ease;
+        margin-top: 6px;
+    }
+    .citation-drawer.open {
+        max-height: 400px;
+    }
+
+    .citation-card {
+        background: rgba(99, 102, 241, 0.06);
+        border: 1px solid rgba(99, 102, 241, 0.15);
+        border-radius: 10px;
+        padding: 10px 14px;
+        margin-bottom: 6px;
+    }
+    .citation-card:last-child { margin-bottom: 0; }
+
+    .citation-title {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.82rem;
+        margin-bottom: 4px;
+    }
+
+    .citation-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+    }
+
+    .citation-authority-badge {
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 10px;
+        background: rgba(16, 185, 129, 0.15);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        color: #34d399;
+    }
+    .citation-authority-badge.secondary {
+        background: rgba(251, 191, 36, 0.12);
+        border-color: rgba(251, 191, 36, 0.3);
+        color: #fbbf24;
+    }
+
+    .citation-score {
+        font-size: 0.7rem;
+        color: var(--text-secondary);
+    }
+
+    .citation-excerpt {
+        font-size: 0.78rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+        font-style: italic;
+        border-left: 2px solid rgba(99, 102, 241, 0.3);
+        padding-left: 8px;
+    }
 </style>
 {% endblock %}
 
@@ -721,7 +810,7 @@ function scrollToBottom() {
 }
 scrollToBottom();
 
-function addMessage(role, content) {
+function addMessage(role, content, citations = []) {
     const empty = chatMessages.querySelector('.empty-chat');
     if (empty) empty.remove();
 
@@ -731,6 +820,64 @@ function addMessage(role, content) {
     bubble.className = 'bubble';
     bubble.textContent = content;
     div.appendChild(bubble);
+
+    // Citation UI — only for assistant messages with verified sources
+    if (role === 'assistant' && citations && citations.length > 0) {
+        const container = document.createElement('div');
+        container.className = 'citation-container';
+
+        // Build authority name list (deduplicated)
+        const authorityNames = [...new Set(
+            citations.map(c => {
+                const auth = c.citation || '';
+                const m = auth.match(/\|\s*([^(]+)\s*\(/);
+                return m ? m[1].trim() : (c.category || 'Source');
+            })
+        )].slice(0, 3).join(', ');
+
+        const pill = document.createElement('div');
+        pill.className = 'citation-pill';
+        pill.innerHTML = `📚 ${citations.length} Verified Source${citations.length > 1 ? 's' : ''} (${authorityNames}) <span class="caret">▼</span>`;
+
+        const drawer = document.createElement('div');
+        drawer.className = 'citation-drawer';
+
+        citations.forEach(c => {
+            const card = document.createElement('div');
+            card.className = 'citation-card';
+
+            // Authority label
+            const rawCitation = c.citation || '';
+            const authMatch = rawCitation.match(/\|\s*([^(]+)\s*\(/);
+            const authorityLabel = authMatch ? authMatch[1].trim() : (c.category || 'Source');
+            const isOfficial = /fbr|sbp|cdns|ministry/i.test(authorityLabel);
+
+            const scorePercent = Math.round((c.score || 0) * 100);
+            const excerpt = (c.content || '').slice(0, 200) + ((c.content || '').length > 200 ? '…' : '');
+
+            card.innerHTML = `
+                <div class="citation-title">${c.title || 'Knowledge Source'}</div>
+                <div class="citation-meta">
+                    <span class="citation-authority-badge ${isOfficial ? '' : 'secondary'}">${authorityLabel}</span>
+                    <span class="citation-score">Relevance: ${scorePercent}%</span>
+                </div>
+                <div class="citation-excerpt">${excerpt}</div>
+            `;
+            drawer.appendChild(card);
+        });
+
+        // Toggle open/close
+        pill.addEventListener('click', () => {
+            const isOpen = drawer.classList.toggle('open');
+            const caret = pill.querySelector('.caret');
+            if (caret) caret.textContent = isOpen ? '▲' : '▼';
+        });
+
+        container.appendChild(pill);
+        container.appendChild(drawer);
+        div.appendChild(container);
+    }
+
     chatMessages.appendChild(div);
     scrollToBottom();
 }
@@ -754,7 +901,7 @@ async function sendChat() {
             body: JSON.stringify({ message: msg }),
         });
         const data = await resp.json();
-        addMessage('assistant', data.response || data.error || 'Something went wrong.');
+        addMessage('assistant', data.response || data.error || 'Something went wrong.', data.citations || []);
     } catch (e) {
         addMessage('assistant', '❌ Network error — please try again.');
     }

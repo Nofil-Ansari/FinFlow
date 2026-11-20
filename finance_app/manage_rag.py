@@ -9,6 +9,7 @@ Commands:
   python manage_rag.py embed         → Generates 768-dim embeddings with 2-tier cache and builds vector index
   python manage_rag.py query <q>     → Semantic vector search returning top-k ranked chunks
   python manage_rag.py warm-cache    → Syncs disk cache embeddings into Redis L1
+  python manage_rag.py retrieve <q>  → Full Hybrid Search (Dense + Lexical + RRF + Re-ranking + Citations)
 """
 
 import sys
@@ -26,6 +27,7 @@ from app.services.rag.embeddings import (
     TwoTierCachedEmbeddingService,
 )
 from app.services.rag.vector_store import get_vector_store
+from app.services.rag.retrieval import HybridRetriever, QueryProcessor
 
 
 def get_pipeline():
@@ -40,9 +42,7 @@ def get_embedding_service():
     base_dir = Path(__file__).parent
     cache_dir = base_dir / "data" / "knowledge" / "processed" / "cache"
     gemini_svc = GeminiEmbeddingService()
-    return TwoTierCachedEmbeddingService(
-        inner_service=gemini_svc, cache_dir=str(cache_dir)
-    )
+    return TwoTierCachedEmbeddingService(inner_service=gemini_svc, cache_dir=str(cache_dir))
 
 
 def cmd_ingest():
@@ -59,14 +59,12 @@ def cmd_stats():
     pipeline = get_pipeline()
     chunks = pipeline.load_processed_chunks()
     if not chunks:
-        print(
-            "No processed chunks found. Please run 'python manage_rag.py ingest' first."
-        )
+        print("No processed chunks found. Please run 'python manage_rag.py ingest' first.")
         return
 
     print("=== FinanceFlow RAG Knowledge Corpus Stats ===")
     print(f"Total Chunks: {len(chunks)}")
-
+    
     categories = {}
     total_tokens = 0
     for ch in chunks:
@@ -84,9 +82,7 @@ def cmd_search(query: str):
     pipeline = get_pipeline()
     chunks = pipeline.load_processed_chunks()
     if not chunks:
-        print(
-            "No processed chunks found. Please run 'python manage_rag.py ingest' first."
-        )
+        print("No processed chunks found. Please run 'python manage_rag.py ingest' first.")
         return
 
     q_lower = query.lower()
@@ -95,10 +91,7 @@ def cmd_search(query: str):
         if q_lower in ch.title.lower() or q_lower in ch.content.lower():
             matches.append(ch)
 
-    print(
-        f"\nKeyword search results for: '{query}' ({len(matches)} matching chunks)\n"
-        + "─" * 60
-    )
+    print(f"\nKeyword search results for: '{query}' ({len(matches)} matching chunks)\n" + "─" * 60)
     for i, ch in enumerate(matches[:5], 1):
         print(f"[{i}] {ch.title} ({ch.category}) — ID: {ch.chunk_id}")
         preview = ch.content.strip().replace("\n", " ")[:160]
@@ -106,80 +99,107 @@ def cmd_search(query: str):
 
 
 def cmd_embed():
-    from app import create_app
+    pipeline = get_pipeline()
+    chunks = pipeline.load_processed_chunks()
+    if not chunks:
+        print("No processed chunks found. Ingesting first...")
+        _, chunks = pipeline.run()
 
-    app = create_app()
-    with app.app_context():
-        pipeline = get_pipeline()
-        chunks = pipeline.load_processed_chunks()
-        if not chunks:
-            print("No processed chunks found. Ingesting first...")
-            _, chunks = pipeline.run()
+    print(f"Embedding {len(chunks)} knowledge chunks...")
+    embedding_svc = get_embedding_service()
+    vector_store = get_vector_store()
 
-        print(f"Embedding {len(chunks)} knowledge chunks...")
-        embedding_svc = get_embedding_service()
-        vector_store = get_vector_store()
+    texts = [f"{c.title}\n{c.content}" for c in chunks]
+    embeddings = embedding_svc.embed_batch(texts)
 
-        texts = [f"{c.title}\n{c.content}" for c in chunks]
-        embeddings = embedding_svc.embed_batch(texts)
-
-        print(
-            f"Indexing {len(embeddings)} vectors into vector store ({vector_store.__class__.__name__})..."
-        )
-        vector_store.add_chunks(chunks, embeddings)
-        print("✓ Vector store indexing complete!")
-        print(f"  • Total indexed items: {vector_store.count()}")
+    print(f"Indexing {len(embeddings)} vectors into vector store ({vector_store.__class__.__name__})...")
+    vector_store.add_chunks(chunks, embeddings)
+    print("✓ Vector store indexing complete!")
+    print(f"  • Total indexed items: {vector_store.count()}")
 
 
 def cmd_query(query: str, top_k: int = 5):
-    from app import create_app
+    embedding_svc = get_embedding_service()
+    vector_store = get_vector_store()
 
-    app = create_app()
-    with app.app_context():
-        embedding_svc = get_embedding_service()
-        vector_store = get_vector_store()
+    if vector_store.count() == 0:
+        print("Vector store is empty. Please run 'python manage_rag.py embed' first.")
+        return
 
-        if vector_store.count() == 0:
-            print(
-                "Vector store is empty. Please run 'python manage_rag.py embed' first."
-            )
-            return
+    print(f"Generating query embedding for: '{query}'...")
+    query_vec = embedding_svc.embed_text(query)
 
-        print(f"Generating query embedding for: '{query}'...")
-        query_vec = embedding_svc.embed_text(query)
+    print(f"Searching top {top_k} nearest neighbors...\n" + "─" * 60)
+    results = vector_store.search(query_vec, top_k=top_k)
 
-        print(f"Searching top {top_k} nearest neighbors...\n" + "─" * 60)
-        results = vector_store.search(query_vec, top_k=top_k)
+    if not results:
+        print("No results found.")
+        return
 
-        if not results:
-            print("No results found.")
-            return
-
-        for i, (chunk, score) in enumerate(results, 1):
-            print(f"[{i}] Score: {score:.4f} | {chunk.title} ({chunk.category})")
-            authority = (chunk.metadata or {}).get("authority", "N/A")
-            print(f"    Chunk ID: {chunk.chunk_id} | Authority: {authority}")
-            preview = chunk.content.strip().replace("\n", " ")[:200]
-            print(f"    Snippet: {preview}...\n")
+    for i, (chunk, score) in enumerate(results, 1):
+        print(f"[{i}] Score: {score:.4f} | {chunk.title} ({chunk.category})")
+        print(f"    Chunk ID: {chunk.chunk_id} | Authority: {chunk.jurisdiction}")
+        preview = chunk.content.strip().replace("\n", " ")[:200]
+        print(f"    Snippet: {preview}...\n")
 
 
 def cmd_warm_cache():
     embedding_svc = get_embedding_service()
     if not embedding_svc.redis_client:
-        print(
-            "Redis is not configured or not running. Set REDIS_URL to use Redis warming."
-        )
+        print("Redis is not configured or not running. Set REDIS_URL to use Redis warming.")
         return
 
     count = embedding_svc.warm_redis_from_disk()
     print(f"✓ Redis cache warming complete! Pushed {count} embeddings to Redis L1.")
 
 
+def cmd_retrieve(query: str, top_k: int = 5):
+    pipeline = get_pipeline()
+    chunks = pipeline.load_processed_chunks()
+    if not chunks:
+        print("No processed chunks found. Please run 'python manage_rag.py embed' first.")
+        return
+
+    embedding_svc = get_embedding_service()
+    vector_store = get_vector_store()
+
+    if vector_store.count() == 0:
+        print("Vector store is empty. Ingesting and embedding first...")
+        cmd_embed()
+
+    retriever = HybridRetriever(
+        vector_store=vector_store,
+        embedding_service=embedding_svc,
+        chunks=chunks,
+        relevance_threshold=0.30
+    )
+
+    norm_q = QueryProcessor.normalize_query(query)
+    intent = QueryProcessor.detect_category_intent(norm_q)
+    print(f"Original Query  : '{query}'")
+    print(f"Normalized Query: '{norm_q}'")
+    print(f"Detected Intent : {intent or 'General / Multi-domain'}\n" + "─" * 60)
+
+    results = retriever.retrieve(query=query, top_k=top_k)
+
+    if not results:
+        print("⚠️ No relevant knowledge chunks met the relevance threshold (Gated query).")
+        return
+
+    print(f"Retrieved {len(results)} authoritative chunks:\n")
+    for i, res in enumerate(results, 1):
+        print(f"[{i}] Rank Score: {res.score:.4f} (Dense: {res.vector_score:.4f}, Lexical: {res.lexical_score:.4f})")
+        print(f"    Citation: {res.citation}")
+        print(f"    Category: {res.chunk.category} | ID: {res.chunk.chunk_id}")
+        if res.matched_terms:
+            print(f"    Matched Terms: {', '.join(res.matched_terms)}")
+        preview = res.chunk.content.strip().replace("\n", " ")[:220]
+        print(f"    Snippet : {preview}...\n")
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print(
-            "Usage: python manage_rag.py [ingest | stats | search <q> | embed | query <q> | warm-cache]"
-        )
+        print("Usage: python manage_rag.py [ingest | stats | search <q> | embed | query <q> | warm-cache | retrieve <q>]")
         sys.exit(1)
 
     cmd = sys.argv[1].lower()
@@ -196,14 +216,15 @@ if __name__ == "__main__":
         cmd_embed()
     elif cmd == "query":
         if len(sys.argv) < 3:
-            print(
-                "Please provide a query, e.g. python manage_rag.py query 'salary tax rates 2024'"
-            )
+            print("Please provide a query, e.g. python manage_rag.py query 'salary tax rates 2024'")
             sys.exit(1)
         cmd_query(" ".join(sys.argv[2:]))
     elif cmd == "warm-cache":
         cmd_warm_cache()
+    elif cmd == "retrieve":
+        if len(sys.argv) < 3:
+            print("Please provide a query, e.g. python manage_rag.py retrieve 'tax on 1.5 lakh salary'")
+            sys.exit(1)
+        cmd_retrieve(" ".join(sys.argv[2:]))
     else:
-        print(
-            f"Unknown command '{cmd}'. Available: ingest, stats, search, embed, query, warm-cache"
-        )
+        print(f"Unknown command '{cmd}'. Available: ingest, stats, search, embed, query, warm-cache, retrieve")

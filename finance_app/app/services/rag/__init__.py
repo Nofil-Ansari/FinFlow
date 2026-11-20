@@ -1,7 +1,7 @@
 """
 RAG (Retrieval-Augmented Generation) package for FinanceFlow.
 Provides document loading, semantic chunking, embedding generation,
-two-tier caching, dual-mode vector storage, and context synthesis.
+two-tier caching, dual-mode vector storage, hybrid retrieval, prompt synthesis, and context grounding.
 """
 
 from .models import KnowledgeDocument, KnowledgeChunk
@@ -21,6 +21,17 @@ from .vector_store import (
     PgVectorStore,
     get_vector_store,
 )
+from .retrieval import (
+    QueryProcessor,
+    LexicalMatcher,
+    ReRanker,
+    HybridRetriever,
+    RetrievalResult,
+)
+from .prompt_synthesizer import (
+    PromptSynthesizer,
+    get_rag_retriever,
+)
 
 __all__ = [
     "KnowledgeDocument",
@@ -37,4 +48,11 @@ __all__ = [
     "LocalVectorStore",
     "PgVectorStore",
     "get_vector_store",
+    "QueryProcessor",
+    "LexicalMatcher",
+    "ReRanker",
+    "HybridRetriever",
+    "RetrievalResult",
+    "PromptSynthesizer",
+    "get_rag_retriever",
 ]

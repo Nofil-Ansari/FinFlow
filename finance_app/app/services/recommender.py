@@ -371,10 +371,10 @@ def _fallback_recommendations() -> List[Recommendation]:
     ]
 
 
-def build_groq_context(user_id: int) -> str:
+def build_groq_context(user_id: int, retrieved_chunks: list = None) -> str:
     """Build rich system prompt for the Groq Finance Chatbot.
 
-    Includes full spending history + Kaggle-enriched financial health profile.
+    Includes full spending history + financial health profile + verified RAG context.
     """
     df = _get_user_df(user_id)
     profile = FinancialProfile.query.filter_by(user_id=user_id).first()
@@ -447,5 +447,12 @@ def build_groq_context(user_id: int) -> str:
             for m, count in list(merchant_hits.items())[:8]:
                 info = SUBSTITUTIONS[m]
                 lines.append(f"  {info['label']}: {count} transactions")
+
+    # Ingest verified RAG knowledge context if provided
+    if retrieved_chunks:
+        from app.services.rag.prompt_synthesizer import PromptSynthesizer
+        rag_context = PromptSynthesizer.format_context(retrieved_chunks)
+        if rag_context:
+            lines.append(rag_context)
 
     return "\n".join(lines)

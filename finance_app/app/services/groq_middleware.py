@@ -290,13 +290,22 @@ class GroqMiddleware:
         # 1. Record incoming user message
         cls._save_message(user_id, "user", user_message)
 
-        # 2. Resolve credentials
+        # 2. Retrieve verified Pakistani RAG knowledge chunks
+        retrieved_chunks = []
+        try:
+            from app.services.rag import get_rag_retriever
+            retriever = get_rag_retriever()
+            retrieved_chunks = retriever.retrieve(user_message, top_k=3)
+        except Exception as e:
+            logger.warning(f"RAG retrieval skipped due to error: {e}")
+
+        # 3. Resolve credentials
         api_key, source = cls.resolve_api_key(user_id)
         target_model = cls.resolve_model(user_id, model_override)
 
-        # 3. Handle offline/no-key mode
+        # 4. Handle offline/no-key mode
         if not api_key:
-            fallback = cls._fallback_response(user_message)
+            fallback = cls._fallback_response(user_message, retrieved_chunks=retrieved_chunks)
             cls._save_message(user_id, "assistant", fallback, tokens=0)
             return {
                 "response": fallback,
@@ -304,10 +313,11 @@ class GroqMiddleware:
                 "is_fallback": True,
                 "model_used": "Offline Fallback",
                 "source": "none",
+                "citations": [r.to_dict() for r in retrieved_chunks],
             }
 
-        # 4. Link models: inject system prompt & recent conversation
-        system_prompt = build_groq_context(user_id)
+        # 5. Link models: inject system prompt (with RAG context) & recent conversation
+        system_prompt = build_groq_context(user_id, retrieved_chunks=retrieved_chunks)
         history = cls._get_chat_history(user_id)
 
         messages = [{"role": "system", "content": system_prompt}]
@@ -387,6 +397,7 @@ class GroqMiddleware:
                 "is_fallback": False,
                 "model_used": target_model,
                 "source": source,
+                "citations": [r.to_dict() for r in retrieved_chunks],
             }
 
         except requests.exceptions.Timeout:
@@ -400,11 +411,12 @@ class GroqMiddleware:
                 "is_fallback": True,
                 "model_used": target_model,
                 "source": source,
+                "citations": [r.to_dict() for r in retrieved_chunks],
             }
         except requests.exceptions.RequestException as e:
             sanitized_err = sanitize_url(str(e))
             logger.error(f"Groq API call error for user {user_id}: {sanitized_err}")
-            fallback = cls._fallback_response(user_message)
+            fallback = cls._fallback_response(user_message, retrieved_chunks=retrieved_chunks)
             cls._save_message(user_id, "assistant", fallback)
             return {
                 "response": fallback,
@@ -412,6 +424,7 @@ class GroqMiddleware:
                 "is_fallback": True,
                 "model_used": target_model,
                 "source": source,
+                "citations": [r.to_dict() for r in retrieved_chunks],
             }
 
     @classmethod
@@ -445,8 +458,23 @@ class GroqMiddleware:
         db.session.commit()
 
     @classmethod
-    def _fallback_response(cls, user_message: str) -> str:
-        """Contextual Pakistani financial rule-based advice when Groq API key is not set."""
+    def _fallback_response(cls, user_message: str, retrieved_chunks: list = None) -> str:
+        """Contextual Pakistani financial rule-based advice when Groq API key is not set.
+        Enriched with top verified RAG knowledge chunks when available.
+        """
+        # If we have a verified RAG chunk matching the query, ground our fallback in real data
+        if retrieved_chunks:
+            top_chunk = retrieved_chunks[0]
+            if top_chunk.score >= 0.30:
+                summary = top_chunk.chunk.content.strip().replace("\n\n", "\n")
+                preview = "\n".join([line for line in summary.split("\n")[:6] if line.strip()])
+                return (
+                    f"💡 **Verified Regulatory Insights ({top_chunk.chunk.title}):**\n\n"
+                    f"{preview}\n\n"
+                    f"📌 *{top_chunk.citation}*\n\n"
+                    "🔑 *Pro-Tip: Click '🔑 Groq API Key' at the top to enable full real-time interactive AI reasoning!*"
+                )
+
         message_lower = user_message.lower()
 
         if any(w in message_lower for w in ["save", "saving", "savings", "bachat"]):

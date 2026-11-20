@@ -7,9 +7,10 @@
 - [x] Document Ingestion & Chunking Pipeline for Pakistani financial regulations, tax laws, investment products, and product substitution databases.
 - [x] Embedding generation pipeline with cost-effective, high-accuracy embeddings (Google text-embedding-004 + zero-dependency local TF-IDF fallback).
 - [x] Vector database integration (Dual-mode: Local NumPy/JSON for dev, pgvector for PostgreSQL / Supabase).
-- [ ] Hybrid Semantic Retrieval & Context Augmentation integrated into `GroqMiddleware` alongside existing user ledger/financial profile data.
-- [ ] RAG evaluation and test suite verifying source citation, retrieval accuracy, and guardrails against hallucinated tax/interest rates.
-- [ ] Web UI citation display in `/ai/advisor` chat showing source reference badges and confidence.
+- [x] Hybrid Semantic Retrieval & Re-ranking Layer (BM25 + Dense RRF fusion, Pakistani query normalization, authority weighting, relevance gating).
+- [x] Context Augmentation & Prompt Synthesis integrated into `GroqMiddleware` alongside existing user ledger/financial profile data.
+- [x] Web UI citation display in `/ai/advisor` chat showing source reference badges and confidence.
+- [x] RAG evaluation and test suite verifying source citation, retrieval accuracy, and guardrails against hallucinated tax/interest rates.
 
 ## Milestone v2.1 Phases (RAG Architecture)
 
@@ -22,15 +23,15 @@
 **Objective**: Build a 768-dimensional pluggable embedding engine (Google Gemini `text-embedding-004` + zero-dependency local fallback), a two-tier L1 Redis + L2 Disk embedding cache with content-hash keys, and a Dual-Mode Vector Store supporting both local NumPy/JSON indexing and `pgvector` on Supabase for serverless Docker/Cloud Run deployment.
 
 ### Phase 3: Semantic Retrieval & Re-ranking Layer
-**Status**: 🚀 Next Up  
+**Status**: ✅ Completed (2026-11-13)  
 **Objective**: Build a query processor that generates query embeddings, performs hybrid search (semantic similarity + keyword/tag filtering by category/merchant), and ranks retrieved chunks with relevance thresholds.
 
 ### Phase 4: Groq Advisor RAG Integration & Prompt Synthesis
-**Status**: ⏳ Queued  
+**Status**: ✅ Completed (2026-11-13)  
 **Objective**: Connect the retrieval layer into `GroqMiddleware.chat()` and `recommender.py`. Dynamically augment system prompts with top-k retrieved context chunks, enforce citation markers (`[Source: ...]`), and handle fallback when relevance is low.
 
 ### Phase 5: UI Citations, Verification & Benchmark Testing
-**Status**: ⏳ Queued  
+**Status**: ✅ Completed (2026-11-13)  
 **Objective**: Update the chat frontend (`ai/advisor.html`) to render collapsible citation pills and source snippets. Author automated test cases validating retrieval relevance and hallucination prevention.
 
 ---
