@@ -467,7 +467,7 @@ class GroqMiddleware:
             top_chunk = retrieved_chunks[0]
             if top_chunk.score >= 0.30:
                 summary = top_chunk.chunk.content.strip().replace("\n\n", "\n")
-                preview = "\n".join([line for line in summary.split("\n")[:6] if line.strip()])
+                preview = summary.strip()
                 return (
                     f"💡 **Verified Regulatory Insights ({top_chunk.chunk.title}):**\n\n"
                     f"{preview}\n\n"

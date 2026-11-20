@@ -9,8 +9,8 @@
 - [x] Vector database integration (Dual-mode: Local NumPy/JSON for dev, pgvector for PostgreSQL / Supabase).
 - [x] Hybrid Semantic Retrieval & Re-ranking Layer (BM25 + Dense RRF fusion, Pakistani query normalization, authority weighting, relevance gating).
 - [x] Context Augmentation & Prompt Synthesis integrated into `GroqMiddleware` alongside existing user ledger/financial profile data.
-- [x] Web UI citation display in `/ai/advisor` chat showing source reference badges and confidence.
-- [x] RAG evaluation and test suite verifying source citation, retrieval accuracy, and guardrails against hallucinated tax/interest rates.
+- [ ] Web UI citation display in `/ai/advisor` chat showing source reference badges and confidence.
+- [ ] RAG evaluation and test suite verifying source citation, retrieval accuracy, and guardrails against hallucinated tax/interest rates.
 
 ## Milestone v2.1 Phases (RAG Architecture)
 
@@ -31,7 +31,7 @@
 **Objective**: Connect the retrieval layer into `GroqMiddleware.chat()` and `recommender.py`. Dynamically augment system prompts with top-k retrieved context chunks, enforce citation markers (`[Source: ...]`), and handle fallback when relevance is low.
 
 ### Phase 5: UI Citations, Verification & Benchmark Testing
-**Status**: ✅ Completed (2026-11-13)  
+**Status**: ⚠️ Incomplete (Gaps Identified in 05-VERIFICATION.md)  
 **Objective**: Update the chat frontend (`ai/advisor.html`) to render collapsible citation pills and source snippets. Author automated test cases validating retrieval relevance and hallucination prevention.
 
 ---

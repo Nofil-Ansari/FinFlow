@@ -31,7 +31,9 @@ Your job: Verify must-haves, detect stubs, identify gaps, and produce VERIFICATI
 Before starting fresh, check if a previous VERIFICATION.md exists:
 
 ```powershell
-Get-ChildItem ".gsd/phases/{N}/*-VERIFICATION.md" -ErrorAction SilentlyContinue
+# Resolve phase directory matching {N} (e.g. .gsd/phases/05-rag)
+$phaseDir = (Get-ChildItem ".gsd/phases" -Directory | Where-Object { $_.Name -match "^0?{N}($|-)" } | Select-Object -First 1).FullName
+Get-ChildItem "$phaseDir/*-VERIFICATION.md" -ErrorAction SilentlyContinue
 ```
 
 **If previous verification exists with gaps → RE-VERIFICATION MODE:**
@@ -103,7 +105,7 @@ must_haves:
 For each truth, determine if codebase enables it.
 
 **Verification status:**
-- ✓ VERIFIED: All supporting artifacts pass all checks
+- ✓ VERIFIED: Empirical evidence confirms each observable truth produces expected behavior via execution/test, and all supporting artifacts pass checks
 - ✗ FAILED: Artifacts missing, stub, or unwired
 - ? UNCERTAIN: Can't verify programmatically (needs human)
 
@@ -245,6 +247,7 @@ Some things can't be verified programmatically:
 - All artifacts pass levels 1-3
 - All key links WIRED
 - No blocker anti-patterns
+- No human verification items pending (human checks take precedence over passed)
 
 **Status: gaps_found**
 - One or more truths FAILED
@@ -254,7 +257,7 @@ Some things can't be verified programmatically:
 
 **Status: human_needed**
 - All automated checks pass
-- BUT items flagged for human verification
+- BUT one or more items flagged for human verification remain outstanding/pending
 
 **Calculate score:**
 ```

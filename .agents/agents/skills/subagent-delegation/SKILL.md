@@ -91,8 +91,8 @@ Every subagent definition in `.agents/agents/` therefore declares its tools expl
 **Copy tool names exactly.** An unmapped or misspelled name makes the subagent hang rather
 than fail — the worst possible failure mode, because it looks like slow work.
 
-`scripts/validate-agents.ps1/.sh` enforces both rules: `tools:` must be present and non-empty,
-and every declared name must exist in the registry above.
+Verify both rules during manifest inspection: `tools:` must be present and non-empty,
+and every declared tool name must exist in the registry above.
 
 ---
 

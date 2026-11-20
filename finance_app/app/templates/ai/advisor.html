@@ -449,6 +449,7 @@
     }
     .citation-drawer.open {
         max-height: 400px;
+        overflow-y: auto;
     }
 
     .citation-card {
@@ -835,9 +836,17 @@ function addMessage(role, content, citations = []) {
             })
         )].slice(0, 3).join(', ');
 
-        const pill = document.createElement('div');
+        const pill = document.createElement('button');
+        pill.type = 'button';
         pill.className = 'citation-pill';
-        pill.innerHTML = `📚 ${citations.length} Verified Source${citations.length > 1 ? 's' : ''} (${authorityNames}) <span class="caret">▼</span>`;
+        pill.setAttribute('aria-expanded', 'false');
+
+        const pillText = document.createTextNode(`📚 ${citations.length} Verified Source${citations.length > 1 ? 's' : ''} (${authorityNames}) `);
+        const caret = document.createElement('span');
+        caret.className = 'caret';
+        caret.textContent = '▼';
+        pill.appendChild(pillText);
+        pill.appendChild(caret);
 
         const drawer = document.createElement('div');
         drawer.className = 'citation-drawer';
@@ -846,7 +855,6 @@ function addMessage(role, content, citations = []) {
             const card = document.createElement('div');
             card.className = 'citation-card';
 
-            // Authority label
             const rawCitation = c.citation || '';
             const authMatch = rawCitation.match(/\|\s*([^(]+)\s*\(/);
             const authorityLabel = authMatch ? authMatch[1].trim() : (c.category || 'Source');
@@ -855,22 +863,40 @@ function addMessage(role, content, citations = []) {
             const scorePercent = Math.round((c.score || 0) * 100);
             const excerpt = (c.content || '').slice(0, 200) + ((c.content || '').length > 200 ? '…' : '');
 
-            card.innerHTML = `
-                <div class="citation-title">${c.title || 'Knowledge Source'}</div>
-                <div class="citation-meta">
-                    <span class="citation-authority-badge ${isOfficial ? '' : 'secondary'}">${authorityLabel}</span>
-                    <span class="citation-score">Relevance: ${scorePercent}%</span>
-                </div>
-                <div class="citation-excerpt">${excerpt}</div>
-            `;
+            // Construct DOM nodes securely via textContent to prevent markup injection
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'citation-title';
+            titleDiv.textContent = c.title || 'Knowledge Source';
+
+            const metaDiv = document.createElement('div');
+            metaDiv.className = 'citation-meta';
+
+            const authBadge = document.createElement('span');
+            authBadge.className = `citation-authority-badge ${isOfficial ? '' : 'secondary'}`;
+            authBadge.textContent = authorityLabel;
+
+            const scoreSpan = document.createElement('span');
+            scoreSpan.className = 'citation-score';
+            scoreSpan.textContent = `Relevance: ${scorePercent}%`;
+
+            metaDiv.appendChild(authBadge);
+            metaDiv.appendChild(scoreSpan);
+
+            const excerptDiv = document.createElement('div');
+            excerptDiv.className = 'citation-excerpt';
+            excerptDiv.textContent = excerpt;
+
+            card.appendChild(titleDiv);
+            card.appendChild(metaDiv);
+            card.appendChild(excerptDiv);
             drawer.appendChild(card);
         });
 
-        // Toggle open/close
+        // Toggle open/close with keyboard and aria-expanded accessibility
         pill.addEventListener('click', () => {
             const isOpen = drawer.classList.toggle('open');
-            const caret = pill.querySelector('.caret');
-            if (caret) caret.textContent = isOpen ? '▲' : '▼';
+            pill.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            caret.textContent = isOpen ? '▲' : '▼';
         });
 
         container.appendChild(pill);

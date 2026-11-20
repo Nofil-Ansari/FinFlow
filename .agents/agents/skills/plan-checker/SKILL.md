@@ -80,6 +80,7 @@ issue:
 1. Parse `depends_on` from each plan frontmatter
 2. Build dependency graph
 3. Check for cycles, missing references, future references
+4. Compare `files_modified` across plans in each wave to identify and flag overlapping file ownership
 
 **Red flags:**
 - Plan references non-existent plan
@@ -126,7 +127,7 @@ State → Render: Does action mention displaying state?
 ```yaml
 issue:
   dimension: key_links_planned
-  severity: warning
+  severity: blocker
   description: "Chat.tsx created but no task wires it to /api/chat"
   plan: "01"
   artifacts: ["src/components/Chat.tsx", "src/app/api/chat/route.ts"]

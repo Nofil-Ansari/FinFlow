@@ -22,10 +22,10 @@ The Central Directorate of National Savings (CDNS) operates government-backed sa
 | Behbood Savings Certificates (BSC) | Senior Citizens (60+), Widows, Special Persons | 10 Years | Monthly | 15.36% (PKR 1,280 / 100k) | **Exempt from WHT & Zakat** |
 | Pensioners Benefit Account (PBA) | Retired Government / Military / Autonomous Body Employees | 10 Years | Monthly | 15.36% (PKR 1,280 / 100k) | **Exempt from WHT & Zakat** |
 | Shuhada Family Welfare Account | Families of Shaheeds | 10 Years | Monthly | 15.36% (PKR 1,280 / 100k) | **Exempt from WHT & Zakat** |
-| Regular Income Certificates (RIC) | General Public | 5 Years | Monthly | 14.64% (PKR 1,220 / 100k) | 15% Filer / 30% Non-Filer WHT |
-| Special Savings Certificates (SSC) | General Public | 3 Years | Semi-Annual (every 6 mos) | 15.20% (avg across periods) | 15% Filer / 30% Non-Filer WHT |
-| Defense Savings Certificates (DSC) | Long-term wealth compounders | 10 Years | At Maturity / Cumulative | ~14.40% compound | 15% Filer / 30% Non-Filer WHT |
-| Sarwa Islamic Savings Account (SISA) | Shariah-compliant savers | Open-ended | Monthly | ~17.50% (expected rate) | 15% Filer / 30% Non-Filer WHT |
+| Regular Income Certificates (RIC) | General Public | 5 Years | Monthly | 14.64% (PKR 1,220 / 100k) | 15% Filer / 35% Non-Filer WHT |
+| Special Savings Certificates (SSC) | General Public | 3 Years | Semi-Annual (every 6 mos) | 15.85% (15.70% for periods 1-5, 16.60% for period 6; June 1, 2024 schedule) | 15% Filer / 35% Non-Filer WHT |
+| Defense Savings Certificates (DSC) | Long-term wealth compounders | 10 Years | At Maturity / Cumulative | ~14.40% compound | 15% Filer / 35% Non-Filer WHT |
+| Sarwa Islamic Savings Account (SISA) | Shariah-compliant savers | Open-ended | Monthly | 20.50% (expected rate applicable June 1, 2024) | 15% Filer / 35% Non-Filer WHT |
 
 ---
 
@@ -42,7 +42,7 @@ The Central Directorate of National Savings (CDNS) operates government-backed sa
 - **Premature Encashment Penalties**: Service charges apply if encashed within 1st, 2nd, 3rd, or 4th year (typically 1.0% to 0.25% of face value).
 
 ### 3. Sarwa Islamic Term Account (SITA)
-- Shariah-compliant alternative to conventional certificates, structured on Mudarabah principle.
+- Shariah-compliant alternative to conventional certificates, structured on Wakala-bil-Istismar principle.
 - Available in 1-year, 3-year, and 5-year tenures with monthly, half-yearly, or maturity profit disbursement.
 
 ---

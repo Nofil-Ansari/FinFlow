@@ -9,7 +9,11 @@
       "substitutions": [
         {
           "original_brand": "Uber / Careem Premium",
-          "match_keywords": ["uber", "careem", "careem go+"],
+          "match_keywords": [
+            "uber",
+            "careem",
+            "careem go+"
+          ],
           "recommended_alternatives": [
             {
               "name": "InDrive",
@@ -41,7 +45,9 @@
       "substitutions": [
         {
           "original_brand": "Netflix Standard / Premium",
-          "match_keywords": ["netflix"],
+          "match_keywords": [
+            "netflix"
+          ],
           "recommended_alternatives": [
             {
               "name": "Netflix Mobile Plan",
@@ -68,7 +74,9 @@
         },
         {
           "original_brand": "Spotify Individual",
-          "match_keywords": ["spotify"],
+          "match_keywords": [
+            "spotify"
+          ],
           "recommended_alternatives": [
             {
               "name": "Spotify Family / Duo",
@@ -93,7 +101,10 @@
       "substitutions": [
         {
           "original_brand": "Panadol (GSK) / Branded Paracetamol",
-          "match_keywords": ["panadol", "calpol", "disprin"],
+          "match_keywords": [
+            "panadol",
+            "calpol"
+          ],
           "recommended_alternatives": [
             {
               "name": "Generic Paracetamol (DRAP Approved)",
@@ -118,7 +129,12 @@
       "substitutions": [
         {
           "original_brand": "International Fast Food (McDonald's / KFC)",
-          "match_keywords": ["mcdonald", "kfc", "hardees", "burger king"],
+          "match_keywords": [
+            "mcdonald",
+            "kfc",
+            "hardees",
+            "burger king"
+          ],
           "recommended_alternatives": [
             {
               "name": "Local Broast / Burger Establishments",
@@ -140,4 +156,3 @@
     }
   ]
 }
-

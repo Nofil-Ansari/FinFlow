@@ -29,7 +29,7 @@ from flask import Flask
 if t.TYPE_CHECKING:
     import typing_extensions as te
 
-charset.add_charset("utf-8", charset.SHORTEST, None, "utf-8")
+# charset.add_charset removed to avoid process-wide side-effects
 
 
 class FlaskMailUnicodeDecodeError(UnicodeDecodeError):
@@ -133,25 +133,41 @@ class Connection:
         self, exc_type: type[BaseException], exc_value: BaseException, tb: TracebackType
     ) -> None:
         if self.host is not None:
-            self.host.quit()
+            try:
+                self.host.quit()
+            except Exception:
+                if exc_value is None:
+                    raise
+            finally:
+                self.host = None
 
     def configure_host(self) -> smtplib.SMTP | smtplib.SMTP_SSL:
+        import ssl
         host: smtplib.SMTP | smtplib.SMTP_SSL
+        timeout = getattr(self.mail, "timeout", None) or 30.0
+        context = ssl.create_default_context()
 
         if self.mail.use_ssl:
-            host = smtplib.SMTP_SSL(self.mail.server, self.mail.port)
+            host = smtplib.SMTP_SSL(self.mail.server, self.mail.port, context=context, timeout=timeout)
         else:
-            host = smtplib.SMTP(self.mail.server, self.mail.port)
+            host = smtplib.SMTP(self.mail.server, self.mail.port, timeout=timeout)
 
         host.set_debuglevel(int(self.mail.debug))
 
-        if self.mail.use_tls:
-            host.starttls()
+        try:
+            if self.mail.use_tls:
+                host.starttls(context=context)
 
-        if self.mail.username and self.mail.password:
-            host.login(self.mail.username, self.mail.password)
+            if self.mail.username and self.mail.password:
+                host.login(self.mail.username, self.mail.password)
 
-        return host
+            return host
+        except Exception:
+            try:
+                host.close()
+            except Exception:
+                pass
+            raise
 
     def send(
         self, message: Message, envelope_from: str | tuple[str, str] | None = None
@@ -173,25 +189,39 @@ class Connection:
         if message.date is None:
             message.date = time.time()
 
+        if self.host is None and not self.mail.suppress:
+            self.host = self.configure_host()
+
+        refused: dict[str, tuple[int, bytes]] = {}
         if self.host is not None:
-            self.host.sendmail(
+            refused = self.host.sendmail(
                 sanitize_address(envelope_from or message.sender),
                 list(sanitize_addresses(message.send_to)),
                 message.as_bytes(),
                 message.mail_options,
                 message.rcpt_options,
             )
+            self.refused = refused
+            if hasattr(message, "refused"):
+                message.refused = refused
 
-        app = current_app._get_current_object()  # type: ignore[attr-defined]
-        email_dispatched.send(app, message=message)
+        app = getattr(self, "app", None) or current_app._get_current_object()  # type: ignore[attr-defined]
+        try:
+            email_dispatched.send(app, message=message)
+        except Exception as sig_err:
+            if hasattr(app, "logger"):
+                app.logger.warning(f"Error in email_dispatched receiver: {sig_err}")
+
         self.num_emails += 1
 
-        if self.num_emails == self.mail.max_emails:
+        if self.mail.max_emails and self.num_emails >= self.mail.max_emails:
             self.num_emails = 0
-
             if self.host:
-                self.host.quit()
-                self.host = self.configure_host()
+                try:
+                    self.host.quit()
+                except Exception:
+                    pass
+                self.host = None
 
     def send_message(self, *args: t.Any, **kwargs: t.Any) -> None:
         """Shortcut for send(msg).
@@ -305,7 +335,8 @@ class Message:
         self.bcc: list[str | tuple[str, str]] = bcc or []
         self.body: str | None = body
         self.alts: dict[str, str] = dict(alts or {})
-        self.html: str | None = html
+        if html is not None:
+            self.html = html
         self.date: float | None = date
         self.msgId: str = make_msgid()
         self.charset: str | None = charset
@@ -342,7 +373,7 @@ class Message:
         If the text is unicode, the utf-8 charset is used.
         """
         charset = self.charset or "utf-8"
-        return MIMEText(text, _subtype=subtype, _charset=charset)  # type: ignore[arg-type]
+        return MIMEText(text if text is not None else "", _subtype=subtype, _charset=charset)  # type: ignore[arg-type]
 
     def _message(self) -> MIMEBase:
         """Creates the email"""
@@ -392,7 +423,11 @@ class Message:
 
         for attachment in attachments:
             f = MIMEBase(*attachment.content_type.split("/"))
-            f.set_payload(attachment.data)
+            data = attachment.data
+            if isinstance(data, str):
+                encoding = self.charset or "utf-8"
+                data = data.encode(encoding)
+            f.set_payload(data)
             encode_base64(f)
 
             if attachment.filename is not None:
@@ -526,7 +561,8 @@ class _MailMixin:
         def record(app: Flask, message: Message) -> None:
             outbox.append(message)
 
-        with email_dispatched.connected_to(record):
+        app = getattr(self, "app", None) or (current_app._get_current_object() if current_app else None)
+        with email_dispatched.connected_to(record, sender=app):
             yield outbox
 
     def send(self, message: Message) -> None:
@@ -551,7 +587,7 @@ class _MailMixin:
 
     def connect(self) -> Connection:
         """Opens a connection to the mail host."""
-        app = getattr(self, "app", None) or current_app
+        app = getattr(self, "app", None) or current_app._get_current_object()
 
         try:
             return Connection(app.extensions["mail"])
@@ -611,7 +647,7 @@ class Mail(_MailMixin):
             config.get("MAIL_USE_TLS", False),
             config.get("MAIL_USE_SSL", False),
             config.get("MAIL_DEFAULT_SENDER"),
-            int(config.get("MAIL_DEBUG", debug)),
+            int(config.get("MAIL_DEBUG", False)),
             config.get("MAIL_MAX_EMAILS"),
             config.get("MAIL_SUPPRESS_SEND", testing),
             config.get("MAIL_ASCII_ATTACHMENTS", False),

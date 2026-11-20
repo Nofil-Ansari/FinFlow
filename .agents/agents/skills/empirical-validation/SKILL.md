@@ -36,6 +36,7 @@ description: Requires proof before marking work complete — no "trust me, it wo
 3. **Document Evidence**
    - Add to `.gsd/JOURNAL.md` under the task
    - Include actual output, not just "passed"
+   - Redact tokens, keys, and credentials from actual output before adding to `.gsd/JOURNAL.md` to ensure secrets are never tracked or exposed
 
 4. **Confirm Against Criteria**
    - Does evidence match expected outcome?

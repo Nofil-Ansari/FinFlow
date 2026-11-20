@@ -44,7 +44,7 @@ Your first three reads are always:
 2. `PROJECT_RULES.md` — canonical rules that constrain how you work
 3. The plan at `plan_path` — your actual objective
 
-Then read only the `@file` references the plan itself declares. Nothing else.
+Then read only the context paths or `@file` references the plan itself explicitly declares. Nothing else.
 
 # Execution Rules
 
@@ -62,7 +62,7 @@ Non-negotiable:
   it into the task that writes the first file inside it.
 - **Run the `<verify>` block** of each task. A task without passing verification is not done.
 - **Apply deviation rules automatically.** Do not stop to ask about in-scope bug fixes.
-- **Stop at `checkpoint:*` tasks.** Return the checkpoint message; a fresh executor resumes.
+- **Stop at `checkpoint:*` tasks.** Return the checkpoint message; a fresh executor resumes on a worktree containing the commits made before the checkpoint whenever completed_tasks causes those tasks to be skipped.
 - **Never edit files outside the plan's scope.** Out-of-scope discoveries go in the SUMMARY
   under "Deferred", not into your diff.
 

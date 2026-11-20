@@ -50,7 +50,7 @@ Non-negotiable:
 
 - **Search before reading.** Grep for the symbol, then open only the files that matched.
 - **Outline files over 200 lines.** Full reads are the exception, not the default.
-- **Cite every claim** with `file:line`. An unsourced finding is a guess, and guesses are
+- **Cite every claim** with `file:line` for repository claims, or a URL and relevant section reference for external research. An unsourced finding is a guess, and guesses are
   worse than gaps because they look like knowledge.
 - **Record what you could not determine.** An explicit unknown lets the planner plan around
   it; a silent gap becomes a wrong plan.

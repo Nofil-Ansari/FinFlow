@@ -353,7 +353,7 @@ wave: {W}
   <name>Write failing tests</name>
   <files>tests/{feature}.test.ts</files>
   <action>Write tests for: {behavior}</action>
-  <verify>npm test shows RED (failing)</verify>
+  <verify>npm test -- -t '{feature}' confirms expected test failure (rejecting passing tests and unrelated failures)</verify>
   <done>Tests written, all failing</done>
 </task>
 
@@ -382,7 +382,7 @@ wave: {W}
 
 When `/verify` finds gaps, create targeted fix plans:
 
-1. **Load gap report** from VERIFICATION.md
+1. **Load gap report** from existing `*-VERIFICATION.md` (e.g., `05-VERIFICATION.md` or `VERIFICATION.md`) in the phase directory
 2. **For each gap:**
    - Identify root cause
    - Create minimal fix task

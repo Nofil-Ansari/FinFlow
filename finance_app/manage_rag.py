@@ -105,6 +105,15 @@ def cmd_embed():
         print("No processed chunks found. Ingesting first...")
         _, chunks = pipeline.run()
 
+    # Ensure environment / config is loaded for database access
+    if "postgres" in os.environ.get("DATABASE_URL", "").lower():
+        try:
+            from app import create_app
+            app = create_app()
+            app.app_context().push()
+        except Exception as e:
+            logger.debug(f"Pre-creating app context for Postgres backend: {e}")
+
     print(f"Embedding {len(chunks)} knowledge chunks...")
     embedding_svc = get_embedding_service()
     vector_store = get_vector_store()
@@ -166,6 +175,8 @@ def cmd_retrieve(query: str, top_k: int = 5):
     if vector_store.count() == 0:
         print("Vector store is empty. Ingesting and embedding first...")
         cmd_embed()
+        vector_store = get_vector_store()
+        chunks = pipeline.load_processed_chunks()
 
     retriever = HybridRetriever(
         vector_store=vector_store,

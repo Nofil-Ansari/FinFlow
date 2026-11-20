@@ -43,9 +43,16 @@ class LocalVectorStore(VectorStoreBase):
     Stores chunks in JSON format and vector embeddings as a NumPy array.
     """
 
-    def __init__(self, index_path: str = "data/knowledge/processed/vector_index.json"):
+    def __init__(
+        self,
+        index_path: str = "data/knowledge/processed/vector_index.json",
+        encoder_name: str = "LocalTfidfEmbedding",
+        dimension: int = 768,
+    ):
         self.index_path = Path(index_path)
         self.index_path.parent.mkdir(parents=True, exist_ok=True)
+        self.encoder_name = encoder_name
+        self.dimension = dimension
         self.chunks: List[KnowledgeChunk] = []
         self.embeddings: Optional[np.ndarray] = None
         self._load()
@@ -56,6 +63,12 @@ class LocalVectorStore(VectorStoreBase):
         try:
             with open(self.index_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
+            idx_encoder = data.get("encoder")
+            idx_dim = data.get("dimension")
+            if idx_encoder and idx_encoder != self.encoder_name:
+                logger.warning(f"Vector index encoder mismatch: {idx_encoder} != {self.encoder_name}")
+            if idx_dim and idx_dim != self.dimension:
+                logger.warning(f"Vector index dimension mismatch: {idx_dim} != {self.dimension}")
             self.chunks = [KnowledgeChunk.from_dict(c) for c in data.get("chunks", [])]
             raw_emb = data.get("embeddings", [])
             if raw_emb:
@@ -72,6 +85,8 @@ class LocalVectorStore(VectorStoreBase):
     def save(self):
         try:
             data = {
+                "encoder": self.encoder_name,
+                "dimension": self.dimension,
                 "chunks": [c.to_dict() for c in self.chunks],
                 "embeddings": (
                     self.embeddings.tolist() if self.embeddings is not None else []

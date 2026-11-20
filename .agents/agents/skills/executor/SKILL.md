@@ -370,14 +370,16 @@ After each task completes, run these as **separate commands**, one per invocatio
 
 **PowerShell:**
 ```powershell
-git add -A
+# Stage only files modified for this task to preserve existing workspace changes
+git add <files modified for task>
 git commit -m "feat({phase}-{plan}): {task description}"
 git log -1 --oneline
 ```
 
 **Bash:**
 ```bash
-git add -A
+# Stage only files modified for this task to preserve existing workspace changes
+git add <files modified for task>
 git commit -m "feat({phase}-{plan}): {task description}"
 git log -1 --oneline
 ```
@@ -441,7 +443,7 @@ Load ONLY what's necessary for current task:
 
 ## SUMMARY.md Format
 
-After plan completion, create `.gsd/phases/{N}/{plan}-SUMMARY.md`:
+After plan completion, create `{phase_dir}/{plan}-SUMMARY.md` using the resolved phase directory from the plan path (e.g. `.gsd/phases/05-rag/{plan}-SUMMARY.md`):
 
 ```markdown
 ---
