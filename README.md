@@ -91,13 +91,15 @@ graph TD
 ## 🚀 Key Features
 
 ### 1. Complete Ledger & Multi-Account Wealth Tracking
+
 Full double-entry ledger supporting Checking, Savings, Cash, and digital wallets (JazzCash, Easypaisa, Nayapay, Sadapay). Transactions are categorized, tagged, and soft-deleted. Multi-currency support with live conversion via Open Exchange Rates.
 
 ### 2. AI Financial Advisor with Groq LLM
+
 High-speed conversational AI using five supported models over the Groq API:
 
 | Model | Badge | Strength |
-|:---|:---:|:---|
+| :--- | :---: | :--- |
 | `openai/gpt-oss-120b` | **Default** | Deep reasoning & rich Pakistani market analysis |
 | `qwen/qwen3.8-27b` | Fast & Smart | Financial budgeting and mathematical accuracy |
 | `groq/compound` | Compound | Multi-step compound reasoning at real-time speed |
@@ -107,6 +109,7 @@ High-speed conversational AI using five supported models over the Groq API:
 Credentials are encrypted at rest using **AES-128-CBC Fernet**. Users bring their own Groq API keys through a live-ping verification modal.
 
 ### 3. RAG Knowledge Engine — Grounded in Pakistani Statute (v2.1)
+
 The advisor is grounded in a curated, versioned knowledge corpus of verified Pakistani financial regulations, eliminating hallucinated tax rates and investment figures:
 
 - **FBR Income Tax 2024–2025**: Complete salaried and non-salaried slabs, withholding tax (WHT) rates for filers vs. non-filers, and high-income surcharge rules.
@@ -118,23 +121,30 @@ The advisor is grounded in a curated, versioned knowledge corpus of verified Pak
 The RAG pipeline uses a **768-dimensional embedding engine** (Google Gemini `gemini-embedding-001` with a zero-dependency local TF-IDF fallback), a **two-tier Redis L1 + Disk L2 cache**, and a **dual-mode vector store** (NumPy for local dev, PostgreSQL `pgvector` for production).
 
 ### 4. Pakistani Market Context & Financial Health Scoring
+
 Financial health scoring (0–100) with automated category spending flags, localized inflation guidance, emergency fund recommendations, and a rule-based Pakistani product substitution engine that maps detected merchant patterns to affordable local alternatives.
 
 ### 5. ML Predictive Spending Analytics
+
 A 15-feature `GradientBoostingRegressor` pipeline with chronological 80/20 split (preventing temporal data leakage) projects end-of-month expenditure per category against actual income. Features include categorical encoding, Fourier seasonality components (`month_sin`, `month_cos`), 3-month rolling statistics, lag features, z-score anomalies, and category share momentum.
 
 ### 6. Real-Time WebSocket Ledger Sync
+
 `/ws/ledger` (Flask-SocketIO) broadcasts authenticated live transaction lifecycle events (create, update, delete) to connected web clients, Microsoft Excel Power Query add-ins, Google Sheets, and BigQuery streaming ingest pipelines.
 
 ### 7. Executive Dual-Format Reporting
+
 One-click export of comprehensive monthly statements:
+
 - **ReportLab PDF**: High-resolution reports with income/expense breakdowns, budget adherence, and savings progress.
 - **OpenPyXL Excel**: Power Query-ready spreadsheets compatible with downstream BI pipelines.
 
 ### 8. Subscription Leakage Scanner
+
 Heuristic detection of 28–32 day billing cycles identifying zombie subscriptions and silent price creep (>5%). Returns `active_subscriptions`, `price_creeps`, estimated `potential_annual_leakage_pkr`, and `total_monthly_commitment_pkr`.
 
 ### 9. Google OAuth & Secure Authentication
+
 Passwordless sign-in via Google OAuth 2.0 (Authlib) alongside traditional email/password registration with CSRF protection (Flask-WTF), session management (Flask-Login), and transactional email notifications (Flask-Mail).
 
 ---
@@ -142,6 +152,7 @@ Passwordless sign-in via Google OAuth 2.0 (Authlib) alongside traditional email/
 ## 🔄 Core Workflows
 
 ### Fund Transfer Flow
+
 ```mermaid
 flowchart TD
     A([User initiates transfer]) --> B{Valid accounts?}
@@ -158,6 +169,7 @@ flowchart TD
 ```
 
 ### RAG Query Pipeline (v2.1)
+
 ```mermaid
 flowchart LR
     Q([User question\nin AI advisor]) --> QE[Generate query embedding\n768-dim Gemini / TF-IDF fallback]
@@ -173,6 +185,7 @@ flowchart LR
 ```
 
 ### Account Balance Computation
+
 ```mermaid
 flowchart LR
     A([balance property called]) --> B["Query transactions\nWHERE account_id = X\nAND is_deleted = FALSE"]
@@ -298,12 +311,14 @@ Project/
 ## 🛠 Quickstart Guide
 
 ### 1. Prerequisites
+
 - Python 3.13+
 - Git
 - *(Optional)* Redis server for L1 embedding cache
 - *(Optional)* PostgreSQL with `pgvector` extension for production vector storage
 
 ### 2. Installation & Virtual Environment Setup
+
 ```powershell
 # Clone the repository
 git clone https://github.com/Mujtaba-Zahid/Project.git
@@ -319,6 +334,7 @@ pip install -r requirements.txt
 ```
 
 ### 3. Environment Configuration
+
 Create a `.env` file inside `finance_app/`:
 
 ```env
@@ -351,10 +367,12 @@ REDIS_URL=redis://localhost:6379/0            # Optional: L1 Redis embedding cac
 ```
 
 ### 4. Run the Application
+
 ```powershell
 cd finance_app
 python run.py
 ```
+
 Open [http://127.0.0.1:5000](http://127.0.0.1:5000) in your browser.
 
 ---
@@ -399,7 +417,7 @@ python -m unittest discover -s tests -p "test_*.py"
 **Current test status: 48/48 tests passing.**
 
 | Suite | File | Tests | Coverage |
-|:---|:---|:---:|:---|
+| :--- | :--- | :---: | :--- |
 | Core Ledger | `test_finance_app.py` | 23 | Accounts, transactions, transfer atomicity, budgets, savings goals |
 | AI Advisor | `test_ai_advisor.py` | 20 | Groq middleware, recommender, auto-categorizer, spending predictor, overspending alerts |
 | RAG Engine | `test_rag_vector_store.py` | 5 | 768-dim normalization, L2 disk cache, Redis degradation, vector search ranking |
@@ -451,6 +469,7 @@ flowchart TD
 ## 📸 Application Walkthrough
 
 ### 1. Executive Dashboard & Financial Health Overview
+
 Live net-worth tracking, multi-account liquid balances, cash flow metrics, and localized ML spending predictions.
 
 ![Executive Dashboard Overview](docs/assets/screenshots/dashboard_overview.png)
@@ -458,6 +477,7 @@ Live net-worth tracking, multi-account liquid balances, cash flow metrics, and l
 ---
 
 ### 2. AI Financial Advisor & Pakistani Localization
+
 Financial health scoring (0–100), localized inflation guidance, emergency fund recommendations, and Pakistani product substitution engine — now grounded in verified FBR, SBP, and National Savings data via RAG.
 
 ![AI Advisor Command Center](docs/assets/screenshots/ai_advisor_hub.png)
@@ -465,6 +485,7 @@ Financial health scoring (0–100), localized inflation guidance, emergency fund
 ---
 
 ### 3. High-Speed LLM Chat via Groq
+
 Direct multi-turn conversational advice tailored to the Pakistani macroeconomic context, with actionable asset allocation and inflation hedging strategies.
 
 ![Live AI Chat Response](docs/assets/screenshots/groq_chat_response.png)
@@ -472,6 +493,7 @@ Direct multi-turn conversational advice tailored to the Pakistani macroeconomic 
 ---
 
 ### 4. Zero-Friction BYO-Key Modal & Fernet Encryption
+
 Users insert and verify their personal Groq API keys with live ping diagnostics. Credentials are encrypted at rest using AES-128-CBC Fernet.
 
 ![Groq API Key Configuration Modal](docs/assets/screenshots/groq_key_config.png)
@@ -479,6 +501,7 @@ Users insert and verify their personal Groq API keys with live ping diagnostics.
 ---
 
 ### 5. Multi-Account Portfolio Management
+
 Track bank accounts (Meezan, HBL, Nayapay, Sadapay), physical cash wallets, credit lines, and real-time PKR balances.
 
 ![Account Portfolio Management](docs/assets/screenshots/accounts_portfolio.png)
@@ -486,6 +509,7 @@ Track bank accounts (Meezan, HBL, Nayapay, Sadapay), physical cash wallets, cred
 ---
 
 ### 6. Analytics, Monthly Reports & Dual-Format Export
+
 Comprehensive monthly income vs. expense breakdown, subscription leakage scanner, and single-click in-memory ReportLab PDF and OpenPyXL Excel statement exports.
 
 ![Monthly Financial Reporting](docs/assets/screenshots/monthly_reporting.png)
@@ -495,7 +519,7 @@ Comprehensive monthly income vs. expense breakdown, subscription leakage scanner
 ## 🛡 Security Design
 
 | Concern | Implementation |
-|:---|:---|
+| :--- | :--- |
 | Groq API Key Storage | Fernet AES-128-CBC encryption at rest in database |
 | Session Management | Flask-Login with server-side session cookies |
 | Form Security | Flask-WTF CSRF protection on all state-changing forms |
@@ -510,7 +534,7 @@ Comprehensive monthly income vs. expense breakdown, subscription leakage scanner
 ## 📦 Technology Stack
 
 | Layer | Technology | Version |
-|:---|:---|:---:|
+| :--- | :--- | :---: |
 | Runtime | Python | 3.13+ |
 | Web Framework | Flask | 3.1.1 |
 | ORM | SQLAlchemy / Flask-SQLAlchemy | 2.0.36 / 3.1.1 |
@@ -535,4 +559,5 @@ Comprehensive monthly income vs. expense breakdown, subscription leakage scanner
 ---
 
 ## 📜 License
+
 Distributed under the [MIT License](LICENSE). Copyright (c) 2026 Mujtaba Zahid.
